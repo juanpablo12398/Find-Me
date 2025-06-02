@@ -1,15 +1,10 @@
 package com.example.proyecto.infrastructure.persitence;
-
 import com.example.proyecto.domain.avistador.Avistador;
+import com.example.proyecto.domain.model.DtoDatosAvistador;
 
-public interface iRepoDeAvistadores {
-        public Avistador getAvistadorDni(String id);
-        public Avistador getAvistadorDni(String id);
-
-        public void addDeck(Deck deck);
-        public void updateDeck(Deck deck);
-        public void updateDeckById(String id, Deck deck);
-        public void deleteDeck(Deck deck);
-        public void deleteDeckById(String id);
-
+public interface IRepoDeAvistadores {
+        public Avistador getAvistador(Avistador avistador);
+        public void addAvistador(Avistador avistador);
+        public void updateAvistador(Avistador avistador);
+        public void deleteAvistador(Avistador avistador);
 }
