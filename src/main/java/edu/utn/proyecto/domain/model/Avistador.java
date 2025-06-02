@@ -1,6 +1,6 @@
-package com.example.proyecto.domain.avistador;
+package edu.utn.proyecto.domain.model;
 
-public class Avistador {
+public class Avistador implements IAvistador {
     public String nombre;
     public String apellido;
     public String dni;
