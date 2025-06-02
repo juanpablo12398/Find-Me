@@ -1,6 +1,5 @@
-package com.example.proyecto.infrastructure.persitence;
-import com.example.proyecto.domain.avistador.Avistador;
-import com.example.proyecto.domain.model.DtoDatosAvistador;
+package edu.utn.proyecto.infrastructure.ports.out;
+import edu.utn.proyecto.domain.model.Avistador;
 
 public interface IRepoDeAvistadores {
         public Avistador getAvistador(Avistador avistador);

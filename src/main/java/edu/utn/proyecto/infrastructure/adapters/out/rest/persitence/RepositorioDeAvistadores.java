@@ -1,12 +1,11 @@
-package com.example.proyecto.infrastructure.persitence;
-import com.example.proyecto.domain.avistador.Avistador;
-import com.example.proyecto.exceptions.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+package edu.utn.proyecto.infrastructure.adapters.out.rest.persitence;
+import edu.utn.proyecto.domain.model.Avistador;
+import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import org.springframework.stereotype.Repository;
 
 
 @Repository
-public class RepositorioDeAvistadores implements IRepoDeAvistadores{
+public class RepositorioDeAvistadores implements IRepoDeAvistadores {
 
     @Override
     public Avistador getAvistador(Avistador avistador) {

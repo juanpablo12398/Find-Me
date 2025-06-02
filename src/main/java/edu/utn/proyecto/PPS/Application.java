@@ -1,4 +1,4 @@
-package com.example.proyecto.PPS;
+package edu.utn.proyecto.PPS;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
