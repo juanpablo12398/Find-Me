@@ -1,6 +1,7 @@
 package edu.utn.proyecto.infrastructure.adapters.in.rest.controller;
-import edu.utn.proyecto.domain.model.IAvistador;
+import edu.utn.proyecto.infrastructure.ports.in.IAvistadorController;
 
-public class AvistadorController implements IAvistador {
-    // Implementa los metodos de IAvistador aquí
+public class AvistadorController implements IAvistadorController {
+    // Implementación del controlador de avistadores
+
 }

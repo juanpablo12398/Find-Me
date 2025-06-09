@@ -1,4 +1,4 @@
-package edu.utn.proyecto.applicacion.usecase;
+package edu.utn.proyecto.applicacion.usecase.avistador;
 
 public class DeleteAvistadorUseCase {
     // Basicamente lo que se hace en un caso de uso, es ailsar la ejecucion

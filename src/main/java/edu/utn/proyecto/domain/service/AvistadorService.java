@@ -1,4 +1,7 @@
 package edu.utn.proyecto.domain.service;
 
-public class AvistadorService {
+import edu.utn.proyecto.domain.service.abstraccion.IAvistadorService;
+
+public class AvistadorService implements IAvistadorService {
+
 }
