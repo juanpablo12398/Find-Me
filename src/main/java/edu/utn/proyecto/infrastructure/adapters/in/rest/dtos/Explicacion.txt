@@ -1,2 +1,0 @@
-// Aca estan los request osea lo que se recibe del cliente
-// Aca se definen los DTOs que se usan para recibir datos del cliente

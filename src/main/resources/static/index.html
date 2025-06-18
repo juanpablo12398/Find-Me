@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Persona Desaparecida</title>
+    <style>
+        body {
+            font-family: Arial;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        img {
+            max-width: 100px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Registrar Persona Desaparecida</h2>
+
+<form id="formDesaparecido">
+    <input type="text" id="nombre" placeholder="Nombre" required />
+    <input type="text" id="apellido" placeholder="Apellido" required />
+    <input type="number" id="edad" placeholder="Edad" required />
+    <textarea id="descripcion" placeholder="Descripción" required></textarea>
+    <input type="text" id="fotoUrl" placeholder="URL de la Foto" />
+    <button type="submit">Registrar</button>
+</form>
+
+<div id="resultado"></div>
+
+<hr>
+
+<h3>Lista de Desaparecidos</h3>
+<button onclick="obtenerDesaparecidos()">Cargar Lista</button>
+
+<table>
+    <thead>
+    <tr>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>DNI</th>
+        <th>Descripción</th>
+        <th>Foto</th>
+        <th>Fecha</th>
+    </tr>
+    </thead>
+    <tbody id="tablaDesaparecidosBody"></tbody>
+</table>
+
+<script>
+    document.getElementById("formDesaparecido").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const nombre = document.getElementById("nombre").value;
+        const apellido = document.getElementById("apellido").value;
+        const edad = parseInt(document.getElementById("edad").value, 10);
+        const descripcion = document.getElementById("descripcion").value;
+        const fotoUrl = document.getElementById("fotoUrl").value || "https://via.placeholder.com/150";
+
+        const requestBody = {
+            nombre,
+            apellido,
+            edad,
+            dni: generarDNI(),
+            fotoUrl,
+            descripcion
+        };
+
+        try {
+            const response = await fetch("/api/desaparecidos", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const resultado = document.getElementById("resultado");
+
+            if (response.ok) {
+                resultado.innerText = "✅ Desaparecido creado correctamente.";
+                resultado.style.color = "green";
+                obtenerDesaparecidos();
+            } else {
+                const error = await response.text();
+                resultado.innerText = "❌ Error: " + error;
+                resultado.style.color = "red";
+            }
+        } catch (err) {
+            console.error(err);
+            const resultado = document.getElementById("resultado");
+            resultado.innerText = "❌ Error de conexión con el backend.";
+            resultado.style.color = "red";
+        }
+    });
+
+    function generarDNI() {
+        return Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+    }
+
+    async function obtenerDesaparecidos() {
+        try {
+            const response = await fetch("/api/desaparecidos");
+            if (!response.ok) {
+                throw new Error("Error al obtener los desaparecidos");
+            }
+
+            const desaparecidos = await response.json();
+            mostrarDesaparecidosEnTabla(desaparecidos);
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+
+    function mostrarDesaparecidosEnTabla(lista) {
+        const tbody = document.getElementById("tablaDesaparecidosBody");
+        tbody.innerHTML = "";
+
+        lista.forEach(d => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${d.nombre}</td>
+                <td>${d.apellido}</td>
+                <td>${d.dni}</td>
+                <td>${d.descripcion}</td>
+                <td><img src="${d.foto}" alt="foto"/></td>
+                <td>${d.fechaDesaparicion}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+</script>
+
+</body>
+</html>

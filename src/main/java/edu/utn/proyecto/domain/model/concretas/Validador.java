@@ -1,4 +1,4 @@
-package edu.utn.proyecto.domain.model;
+package edu.utn.proyecto.domain.model.concretas;
 
 import edu.utn.proyecto.domain.model.abstraccion.IValidador;
 
