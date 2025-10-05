@@ -32,9 +32,11 @@ public class DesaparecidoMapper {
     // De Entidad de Dominio → DTO de Respuesta
     public DesaparecidoResponseDTO fromDomainToResponse(Desaparecido desaparecido) {
         DesaparecidoResponseDTO response = new DesaparecidoResponseDTO(
+                desaparecido.getId(),
                 desaparecido.getNombre(),
                 desaparecido.getApellido(),
                 desaparecido.getDni(),
+                desaparecido.getFechaDesaparicion(),
                 desaparecido.getDescripcion(),
                 desaparecido.getFoto()
         );
@@ -49,6 +51,8 @@ public class DesaparecidoMapper {
                 .map(this::fromDomainToResponse)
                 .collect(Collectors.toList());
     }
+
+    // ------------------------------------------------------------------------------------------------------------------------------
 
     // ResponseDTO → FrontDTO (para devolver al frontend)
     public DesaparecidoFrontDTO fromResponseToFront(DesaparecidoResponseDTO dto) {

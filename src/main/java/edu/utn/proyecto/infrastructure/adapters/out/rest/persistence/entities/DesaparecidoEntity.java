@@ -1,29 +1,43 @@
-package edu.utn.proyecto.applicacion.dtos;
-
+package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class DesaparecidoResponseDTO {
+@Entity
+@Table(name = "desaparecidos")
+public class DesaparecidoEntity {
+    @Id
+    @GeneratedValue
+    // @JdbcTypeCode(SqlTypes.UUID)
+    // Si hay problemas con el mapeo de UUID, descomentar la línea anterior
     private UUID id;
     private String nombre;
     private String apellido;
     private String dni;
-    private LocalDateTime fechaDesaparicion;
     private String descripcion;
-    private String foto;
+    private String fotoUrl;
+    private LocalDateTime fechaDesaparicion;
+    // …getters y setters…
+    public DesaparecidoEntity() {}
 
-    public DesaparecidoResponseDTO(UUID id, String nombre, String apellido, String dni,
-                                   LocalDateTime fechaDesaparicion, String descripcion, String foto) {
+    public DesaparecidoEntity(UUID id, String nombre, String apellido, String dni, String descripcion, String fotoUrl, LocalDateTime fechaDesaparicion) {
         this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
-        this.fechaDesaparicion = fechaDesaparicion;
         this.descripcion = descripcion;
-        this.foto = foto;
+        this.fotoUrl = fotoUrl;
+        this.fechaDesaparicion = fechaDesaparicion;
     }
 
-    // Getters and Setters
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
     public String getNombre() {
         return nombre;
     }
@@ -48,14 +62,6 @@ public class DesaparecidoResponseDTO {
         this.dni = dni;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public LocalDateTime getFechaDesaparicion() {
-        return fechaDesaparicion;
-    }
-
     public String getDescripcion() {
         return descripcion;
     }
@@ -64,16 +70,16 @@ public class DesaparecidoResponseDTO {
         this.descripcion = descripcion;
     }
 
-    public String getFoto() {
-        return foto;
+    public String getFotoUrl() {
+        return fotoUrl;
     }
 
-    public void setFoto(String foto) {
-        this.foto = foto;
+    public void setFotoUrl(String fotoUrl) {
+        this.fotoUrl = fotoUrl;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
+    public LocalDateTime getFechaDesaparicion() {
+        return fechaDesaparicion;
     }
 
     public void setFechaDesaparicion(LocalDateTime fechaDesaparicion) {

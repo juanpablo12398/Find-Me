@@ -8,6 +8,8 @@ public class DesaparecidoRequestDTO {
     public String fotoUrl;
     public String descripcion;
 
+    public DesaparecidoRequestDTO() {}
+
     public DesaparecidoRequestDTO(String nombre, String apellido, int edad, String dni, String fotoUrl, String descripcion) {
         this.nombre = nombre;
         this.apellido = apellido;

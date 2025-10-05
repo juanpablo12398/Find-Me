@@ -4,9 +4,11 @@ import edu.utn.proyecto.applicacion.mappers.DesaparecidoMapper;
 import edu.utn.proyecto.domain.model.concretas.Desaparecido;
 import edu.utn.proyecto.domain.service.abstraccion.IDesaparecidoService;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoRequestDTO;
-import edu.utn.proyecto.infrastructure.adapters.out.rest.persitence.RepositorioDeDesaparecidos;
+import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.neonBase.RepositorioDeDesaparecidos;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -21,6 +23,7 @@ public class DesaparecidoService implements IDesaparecidoService {
         this.desaparecidoMapper = desaparecidoMapper;
     }
 
+    @Transactional
     // Flujo de creacion de desaparecido
     public DesaparecidoResponseDTO crearDesaparecido(DesaparecidoRequestDTO requestDto) {
         // Primero tradusco a una entidad de dominio
@@ -31,6 +34,7 @@ public class DesaparecidoService implements IDesaparecidoService {
         return desaparecidoMapper.fromDomainToResponse(desaparecido);
     }
 
+    @Transactional(readOnly = true)
     //Flujo de obtener desaparecidos
     public List<DesaparecidoResponseDTO> obtenerDesaparecidos() {
         // Obtengo la lista de desaparecidos del repositorio
