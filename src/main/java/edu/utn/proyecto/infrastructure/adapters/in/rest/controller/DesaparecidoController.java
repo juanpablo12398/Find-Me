@@ -1,10 +1,9 @@
 package edu.utn.proyecto.infrastructure.adapters.in.rest.controller;
 import edu.utn.proyecto.applicacion.dtos.DesaparecidoResponseDTO;
 import edu.utn.proyecto.applicacion.usecase.desaparecido.CreateDesaparecidoUseCase;
-import edu.utn.proyecto.applicacion.usecase.desaparecido.GetAllDesaparecidosUseCase;
+import edu.utn.proyecto.applicacion.usecase.desaparecido.ReadDesaparecidoUseCase;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoFrontDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoRequestDTO;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,11 +20,11 @@ import java.util.List;
 public class DesaparecidoController {
 
     private final CreateDesaparecidoUseCase crearDesaparecidoUseCase;
-    private final GetAllDesaparecidosUseCase getAllDesaparecidosUseCase;
+    private final ReadDesaparecidoUseCase readDesaparecidoUseCase;
 
-    public DesaparecidoController(CreateDesaparecidoUseCase crearDesaparecidoUseCase, GetAllDesaparecidosUseCase getAllDesaparecidosUseCase) {
+    public DesaparecidoController(CreateDesaparecidoUseCase crearDesaparecidoUseCase, ReadDesaparecidoUseCase readDesaparecidoUseCase) {
         this.crearDesaparecidoUseCase = crearDesaparecidoUseCase;
-        this.getAllDesaparecidosUseCase = getAllDesaparecidosUseCase;
+        this.readDesaparecidoUseCase = readDesaparecidoUseCase;
     }
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -37,7 +36,7 @@ public class DesaparecidoController {
 
     @GetMapping
     public ResponseEntity<List<DesaparecidoFrontDTO>> getAll() {
-        List<DesaparecidoFrontDTO> lista = getAllDesaparecidosUseCase.execute();
+        List<DesaparecidoFrontDTO> lista = readDesaparecidoUseCase.execute();
         return ResponseEntity.ok(lista);
     }
 }

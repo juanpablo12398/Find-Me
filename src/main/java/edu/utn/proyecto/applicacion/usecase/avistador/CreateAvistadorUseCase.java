@@ -1,9 +1,18 @@
 package edu.utn.proyecto.applicacion.usecase.avistador;
+import edu.utn.proyecto.applicacion.dtos.AvistadorResponseDTO;
+import edu.utn.proyecto.domain.service.AvistadorService;
+import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
+import org.springframework.stereotype.Service;
 
+@Service
 public class CreateAvistadorUseCase {
-    // Basicamente lo que se hace en un caso de uso, es ailsar la ejecucion
-    // del flujo, cuyo codigo se encuentra en el servicio de Avistador.
-    // De manera que aca se hace una funcion por ejemplo ejecutar(),
-    // que se encarga de llamar al servicio de Avistador para crear un avistador.
+    private final AvistadorService service;
 
+    public CreateAvistadorUseCase(AvistadorService service) {
+        this.service = service;
+    }
+
+    public AvistadorResponseDTO execute(AvistadorRequestDTO dto) {
+        return service.registrar(dto);
+    }
 }

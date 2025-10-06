@@ -3,47 +3,64 @@
 <head>
     <meta charset="UTF-8" />
     <title>Find Me – SPA Básica</title>
-    <style>
-        body { font-family: Arial; max-width:800px; margin:40px auto; padding:20px; }
-        nav { margin-bottom:20px; }
-        nav button { margin-right:10px; padding:8px 16px; }
-        section { display:none; }
-        section.active { display:block; }
-        input, textarea, button { width:100%; margin-bottom:15px; padding:10px; border-radius:4px; border:1px solid #ccc; }
-        table { width:100%; border-collapse:collapse; margin-top:20px; }
-        th, td { padding:8px; border:1px solid #ddd; text-align:center; }
-        img { max-width:80px; }
-        #resultado { margin-top:10px; font-weight:bold; }
-    </style>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<h1>Find Me (SPA básica)</h1>
+<h1>Find Me </h1>
 
 <nav>
-    <button id="btnNavForm">Registrar</button>
-    <button id="btnNavList">Ver Lista</button>
+    <button id="btnNavAvistador">Registrarme</button>
+    <button id="btnNavForm">Registrar desaparecido</button>
+    <button id="btnNavList">Ver lista</button>
 </nav>
 
-<!-- FORMULARIO -->
+<!-- AVISTADOR -->
+<section id="avistadorSection" class="">
+    <h2>Crear mi cuenta (Avistador)</h2>
+    <form id="formAvistador" novalidate>
+        <div class="row">
+            <input type="text" id="a_nombre" placeholder="Nombre" required />
+            <input type="text" id="a_apellido" placeholder="Apellido" required />
+        </div>
+        <div class="row">
+            <input type="text" id="a_dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required />
+            <input type="number" id="a_edad" placeholder="Edad" min="0" required />
+        </div>
+        <input type="text" id="a_direccion" placeholder="Dirección" required />
+        <div class="row">
+            <input type="email" id="a_email" placeholder="Email (opcional)" />
+            <input type="tel" id="a_telefono" placeholder="Teléfono (opcional)" />
+        </div>
+        <button type="submit" id="btnAvistador">Registrarme</button>
+    </form>
+    <div id="outAvistador" class="muted"></div>
+</section>
+
+<!-- FORMULARIO DESAPARECIDO -->
 <section id="formSection" class="active">
     <h2>Registrar Persona Desaparecida</h2>
-    <form id="formDesaparecido">
-        <input type="text" id="nombre" placeholder="Nombre" required />
-        <input type="text" id="apellido" placeholder="Apellido" required />
-        <input type="number" id="edad" placeholder="Edad" min="0" required />
-        <input type="text" id="dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required/>
+    <form id="formDesaparecido" novalidate>
+        <div class="row">
+            <input type="text" id="nombre" placeholder="Nombre" required />
+            <input type="text" id="apellido" placeholder="Apellido" required />
+        </div>
+        <div class="row">
+            <input type="number" id="edad" placeholder="Edad" min="0" required />
+            <input type="text" id="dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required/>
+        </div>
         <textarea id="descripcion" placeholder="Descripción" required></textarea>
         <input type="url" id="fotoUrl" placeholder="URL de la Foto (opcional)" />
-        <button type="submit">Enviar</button>
+        <button type="submit" id="btnSubmit">Enviar</button>
     </form>
-    <div id="resultado"></div>
+    <div id="resultado" class="muted"></div>
 </section>
 
 <!-- LISTADO -->
 <section id="listSection">
     <h2>Lista de Desaparecidos</h2>
     <button id="btnReload">↻ Recargar lista</button>
+    <div id="listaEstado" class="muted"></div>
     <table>
         <thead>
         <tr>
@@ -55,89 +72,6 @@
     </table>
 </section>
 
-<script>
-    const baseUrl = "/api/desaparecidos";
-
-    // Navegación SPA
-    document.getElementById("btnNavForm").onclick = ()=> {
-      document.getElementById("formSection").classList.add("active");
-      document.getElementById("listSection").classList.remove("active");
-    };
-    document.getElementById("btnNavList").onclick = ()=> {
-      document.getElementById("listSection").classList.add("active");
-      document.getElementById("formSection").classList.remove("active");
-      loadList();
-    };
-
-    // Envío del formulario (POST)
-    document.getElementById("formDesaparecido").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const v = id => document.getElementById(id).value.trim();
-
-      const body = {
-        nombre: v("nombre"),
-        apellido: v("apellido"),
-        edad: parseInt(v("edad"), 10),
-        dni: v("dni"),
-        descripcion: v("descripcion"),
-        fotoUrl: v("fotoUrl") || "https://via.placeholder.com/150"
-      };
-
-      const out = document.getElementById("resultado");
-      out.textContent = "";
-      try {
-        const resp = await fetch(baseUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body)
-        });
-        if (!resp.ok) {
-          const errorText = await resp.text();
-          throw new Error(errorText || `HTTP ${resp.status}`);
-        }
-        const creado = await resp.json();
-        out.textContent = `✅ Persona registrada con ID: ${creado.id}`;
-        out.style.color = "green";
-        // opcional: limpiar el form
-        e.target.reset();
-      } catch (err) {
-        out.textContent = "❌ " + err.message;
-        out.style.color = "red";
-      }
-    });
-
-    // Cargar lista (GET)
-    document.getElementById("btnReload").onclick = loadList;
-    async function loadList() {
-      try {
-        const resp = await fetch(baseUrl);
-        if (!resp.ok) throw new Error("No se pudo cargar la lista");
-        const data = await resp.json();
-        renderTable(data);
-      } catch (err) {
-        console.error(err);
-        alert("Error al cargar la lista");
-      }
-    }
-
-    // Renderizar tabla (usa FrontDTO: foto y fechaFormateada)
-    function renderTable(data) {
-      const tbody = document.getElementById("tablaDesaparecidosBody");
-      tbody.innerHTML = "";
-      data.forEach(d => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${d.nombre}</td>
-          <td>${d.apellido}</td>
-          <td>${d.dni}</td>
-          <td>${d.descripcion}</td>
-          <td><img src="${d.foto}" alt="foto"/></td>
-          <td>${d.fechaFormateada}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-</script>
-
+<script src="script.js" defer></script>
 </body>
 </html>

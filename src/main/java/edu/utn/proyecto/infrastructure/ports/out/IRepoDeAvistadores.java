@@ -1,7 +1,9 @@
 package edu.utn.proyecto.infrastructure.ports.out;
 import edu.utn.proyecto.domain.model.concretas.Avistador;
+import java.util.Optional;
 
 public interface IRepoDeAvistadores {
-        public Avistador getAvistador(Avistador avistador);
-        public void addAvistador(Avistador avistador);
+        Avistador save(Avistador avistador);
+        Optional<Avistador> findByDni(String dni);   // <--- Optional para poder leer datos
+        boolean existsByDni(String dni);
 }
