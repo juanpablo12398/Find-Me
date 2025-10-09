@@ -1,4 +1,5 @@
 package edu.utn.proyecto.domain.service;
+
 import edu.utn.proyecto.applicacion.dtos.AvistadorResponseDTO;
 import edu.utn.proyecto.applicacion.mappers.AvistadorMapper;
 import edu.utn.proyecto.domain.model.concretas.Avistador;
@@ -6,6 +7,9 @@ import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.RenaperPersonaEntity;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
+import edu.utn.proyecto.avistador.exception.DatosNoCoincidenException;
+import edu.utn.proyecto.avistador.exception.DniDuplicadoException;
+import edu.utn.proyecto.avistador.exception.PersonaNoEncontradaException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,30 +30,32 @@ public class AvistadorService {
 
     @Transactional
     public AvistadorResponseDTO registrar(AvistadorRequestDTO dto) {
-        String dni = normalize(dto.getDni());
-        String nombre = normalize(dto.getNombre());
+        // normalizo entradas para evitar problemas de mayúsculas/acentos/espacios
+        String dni      = normalize(dto.getDni());
+        String nombre   = normalize(dto.getNombre());
         String apellido = normalize(dto.getApellido());
 
-        // 1) existe en padrón?
+        // 1) existe en padrón RENAPER?
         RenaperPersonaEntity persona = renaperRepo.findByDni(dni)
                 .orElseThrow(() -> new PersonaNoEncontradaException(dni));
 
         // 2) coinciden datos básicos?
-        if (!nombre.equals(normalize(persona.getNombre()))
-                || !apellido.equals(normalize(persona.getApellido()))) {
+        if (!nombre.equals(normalize(persona.getNombre())) ||
+                !apellido.equals(normalize(persona.getApellido()))) {
             throw new DatosNoCoincidenException();
         }
 
-        // 3) ya está registrado?
+        // 3) ya está registrado en nuestra app?
         if (avistadorRepo.existsByDni(dni)) {
             throw new DniDuplicadoException(dni);
         }
 
         // 4) guardar
         Avistador domain = mapper.fromRequestToDomain(dto);
-        domain.setDni(dni); // normalizado
+        domain.setDni(dni); // guardo normalizado
         Avistador saved = avistadorRepo.save(domain);
 
+        // 5) responder
         return mapper.fromDomainToResponse(saved);
     }
 
@@ -58,16 +64,5 @@ public class AvistadorService {
         return java.text.Normalizer.normalize(s.trim(), java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}+", "")
                 .toUpperCase();
-    }
-
-    // Excepciones
-    public static class PersonaNoEncontradaException extends RuntimeException {
-        public PersonaNoEncontradaException(String dni) { super("No existe en padrón: " + dni); }
-    }
-    public static class DatosNoCoincidenException extends RuntimeException {
-        public DatosNoCoincidenException() { super("Los datos no coinciden con el padrón."); }
-    }
-    public static class DniDuplicadoException extends RuntimeException {
-        public DniDuplicadoException(String dni) { super("El DNI ya está registrado: " + dni); }
     }
 }
