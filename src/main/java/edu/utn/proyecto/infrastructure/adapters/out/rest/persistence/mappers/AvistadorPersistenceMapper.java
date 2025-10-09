@@ -1,5 +1,5 @@
 package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.mappers;
-import edu.utn.proyecto.domain.model.concretas.Avistador;
+import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.AvistadorEntity;
 import org.springframework.stereotype.Component;
 

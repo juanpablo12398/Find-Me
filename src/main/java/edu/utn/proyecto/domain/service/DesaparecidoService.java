@@ -1,46 +1,41 @@
 package edu.utn.proyecto.domain.service;
 import edu.utn.proyecto.applicacion.dtos.DesaparecidoResponseDTO;
 import edu.utn.proyecto.applicacion.mappers.DesaparecidoMapper;
-import edu.utn.proyecto.domain.model.concretas.Desaparecido;
-import edu.utn.proyecto.domain.service.abstraccion.IDesaparecidoService;
+import edu.utn.proyecto.applicacion.validation.desaparecido.DesaparecidoCreatePolicy;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoRequestDTO;
-import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.neonBase.RepositorioDeDesaparecidos;
-import org.springframework.beans.factory.annotation.Autowired;
+import edu.utn.proyecto.infrastructure.ports.out.IRepoDeDesaparecidos;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import edu.utn.proyecto.common.validation.abstraccion.Validator;
 import java.util.List;
 
 @Service
-public class DesaparecidoService implements IDesaparecidoService {
+public class DesaparecidoService {
 
-    private final RepositorioDeDesaparecidos repositorioDeDesaparecidos;
-    private final DesaparecidoMapper desaparecidoMapper;
+    private final IRepoDeDesaparecidos repo;
+    private final DesaparecidoMapper mapper;
+    private final Validator<DesaparecidoRequestDTO> createPolicy;
 
-    @Autowired
-    public DesaparecidoService(RepositorioDeDesaparecidos repositorioDeDesaparecidos, DesaparecidoMapper desaparecidoMapper) {
-        this.repositorioDeDesaparecidos = repositorioDeDesaparecidos;
-        this.desaparecidoMapper = desaparecidoMapper;
+    public DesaparecidoService(IRepoDeDesaparecidos repo,
+                               DesaparecidoMapper mapper,
+                               DesaparecidoCreatePolicy createPolicy) {
+        this.repo = repo;
+        this.mapper = mapper;
+        this.createPolicy = createPolicy;
     }
 
     @Transactional
-    // Flujo de creacion de desaparecido
-    public DesaparecidoResponseDTO crearDesaparecido(DesaparecidoRequestDTO requestDto) {
-        // Primero tradusco a una entidad de dominio
-        Desaparecido desaparecido = desaparecidoMapper.fromRequestToDomain(requestDto);
-        // Luego lo guardo en mi repositorio
-        this.repositorioDeDesaparecidos.save(desaparecido);
-        // Y devuelvo el dominio convertido a DTO de respuesta
-        return desaparecidoMapper.fromDomainToResponse(desaparecido);
+    public DesaparecidoResponseDTO crearDesaparecido(DesaparecidoRequestDTO dto) {
+        createPolicy.validate(dto);
+        var domain = mapper.fromRequestToDomain(dto);
+        var saved = repo.save(domain);
+        return mapper.fromDomainToResponse(saved);
     }
 
     @Transactional(readOnly = true)
-    //Flujo de obtener desaparecidos
     public List<DesaparecidoResponseDTO> obtenerDesaparecidos() {
-        // Obtengo la lista de desaparecidos del repositorio
-        List<Desaparecido> desaparecidos = this.repositorioDeDesaparecidos.getDesaparecidos();
-        // Mapeo cada desaparecido a su DTO de respuesta
-        return desaparecidoMapper.fromDomainToResponse(desaparecidos);
+        return repo.getDesaparecidos().stream()
+                .map(mapper::fromDomainToResponse)
+                .toList();
     }
-
 }

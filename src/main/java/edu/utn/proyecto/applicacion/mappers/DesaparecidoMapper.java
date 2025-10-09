@@ -1,6 +1,6 @@
 package edu.utn.proyecto.applicacion.mappers;
 import edu.utn.proyecto.applicacion.dtos.DesaparecidoResponseDTO;
-import edu.utn.proyecto.domain.model.concretas.Desaparecido;
+import edu.utn.proyecto.domain.model.concreta.Desaparecido;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoFrontDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoRequestDTO;
 import org.springframework.stereotype.Component;

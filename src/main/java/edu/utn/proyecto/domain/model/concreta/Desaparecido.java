@@ -1,4 +1,4 @@
-package edu.utn.proyecto.domain.model.concretas;
+package edu.utn.proyecto.domain.model.concreta;
 import edu.utn.proyecto.domain.model.abstraccion.IDesaparecido;
 
 import java.time.LocalDateTime;

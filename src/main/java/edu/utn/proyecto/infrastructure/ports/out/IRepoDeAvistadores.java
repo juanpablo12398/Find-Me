@@ -1,5 +1,5 @@
 package edu.utn.proyecto.infrastructure.ports.out;
-import edu.utn.proyecto.domain.model.concretas.Avistador;
+import edu.utn.proyecto.domain.model.concreta.Avistador;
 import java.util.Optional;
 
 public interface IRepoDeAvistadores {

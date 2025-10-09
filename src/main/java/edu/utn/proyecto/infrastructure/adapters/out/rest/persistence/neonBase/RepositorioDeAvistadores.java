@@ -1,5 +1,5 @@
 package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.neonBase;
-import edu.utn.proyecto.domain.model.concretas.Avistador;
+import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.AvistadorEntity;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.mappers.AvistadorPersistenceMapper;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;

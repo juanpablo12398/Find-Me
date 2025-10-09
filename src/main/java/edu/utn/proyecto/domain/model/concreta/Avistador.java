@@ -1,4 +1,4 @@
-package edu.utn.proyecto.domain.model.concretas;
+package edu.utn.proyecto.domain.model.concreta;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

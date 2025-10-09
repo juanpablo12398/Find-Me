@@ -1,13 +1,19 @@
 package edu.utn.proyecto.infrastructure.adapters.in.rest.dtos;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.*;
 
 public class AvistadorRequestDTO {
-    private String dni;
-    private String nombre;
-    private String apellido;
-    private Integer edad;
+    @NotBlank @Pattern(regexp="\\d{7,10}") private String dni;
+    @NotBlank private String nombre;
+    @NotBlank private String apellido;
+    @NotNull
+    @Min(0) @Max(120) private Integer edad;
+    @NotBlank
     private String direccion;
+    @Email
+    @Nullable
     private String email;
-    private String telefono;
+    @Nullable private String telefono;
 
     public AvistadorRequestDTO() {}
 

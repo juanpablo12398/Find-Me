@@ -1,6 +1,6 @@
 package edu.utn.proyecto.applicacion.mappers;
 import edu.utn.proyecto.applicacion.dtos.AvistadorResponseDTO;
-import edu.utn.proyecto.domain.model.concretas.Avistador;
+import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;

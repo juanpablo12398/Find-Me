@@ -1,5 +1,5 @@
 package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.mappers;
-import edu.utn.proyecto.domain.model.concretas.Desaparecido;
+import edu.utn.proyecto.domain.model.concreta.Desaparecido;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.DesaparecidoEntity;
 import org.springframework.stereotype.Component;
 

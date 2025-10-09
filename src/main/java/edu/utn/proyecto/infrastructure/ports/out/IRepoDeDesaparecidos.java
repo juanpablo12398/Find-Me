@@ -1,8 +1,12 @@
 package edu.utn.proyecto.infrastructure.ports.out;
-import edu.utn.proyecto.domain.model.concretas.Desaparecido;
+import edu.utn.proyecto.domain.model.concreta.Desaparecido;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface IRepoDeDesaparecidos {
-    public Desaparecido save(Desaparecido desaparecido);
-    public List<Desaparecido> getDesaparecidos();
+    Desaparecido save(Desaparecido desaparecido);
+    List<Desaparecido> getDesaparecidos();
+    Optional<Desaparecido> findById(UUID id);
+    boolean existsByDni(String dni);
 }
