@@ -1,4 +1,6 @@
 package edu.utn.proyecto.applicacion.validation.avistador;
+import edu.utn.proyecto.avistador.exception.AvistadorError;
+import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.normalize.DniNormalizer;
 import edu.utn.proyecto.common.normalize.TextNormalizer;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
@@ -6,8 +8,8 @@ import edu.utn.proyecto.common.validation.abstraccion.Validator;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
-import edu.utn.proyecto.avistador.exception.*;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 
 @Component
@@ -33,27 +35,40 @@ public class AvistadorRegistrationPolicy implements Validator<AvistadorRequestDT
 
     @Override
     public void validate(AvistadorRequestDTO dto) {
-        // 0) reglas de negocio particulares (ej. mayor de edad)
+        // 1) Reglas negocio (incluye edad)
         for (var r : rules) r.check(dto);
 
-        // 1) normalización
-        String dni = dniNorm.normalize(dto.getDni());
-        String nombre = txtNorm.upperNoAccents(dto.getNombre());
-        String apellido = txtNorm.upperNoAccents(dto.getApellido());
+        // 2) Normalizar
+        final String dni = dniNorm.normalize(dto.getDni());
+        final String nombre = txtNorm.upperNoAccents(dto.getNombre());
+        final String apellido = txtNorm.upperNoAccents(dto.getApellido());
 
-        // 2) padrón RENAPER
+        // 3) RENAPER: existencia
         var persona = renaper.findByDni(dni)
-                .orElseThrow(() -> new PersonaNoEncontradaException(dni));
+                .orElseThrow(() -> DomainException.of(
+                        AvistadorError.PADRON_NOT_FOUND.key,
+                        AvistadorError.PADRON_NOT_FOUND.status,
+                        "No existe en padrón (RENAPER)."));
 
-        if (!nombre.equals(txtNorm.upperNoAccents(persona.getNombre())) ||
-                !apellido.equals(txtNorm.upperNoAccents(persona.getApellido()))) {
-            throw new DatosNoCoincidenException();
+        // 4) RENAPER: coincidencia
+        String nombreRenaper = txtNorm.upperNoAccents(persona.getNombre());
+        String apellidoRenaper = txtNorm.upperNoAccents(persona.getApellido());
+        if (!nombre.equals(nombreRenaper) || !apellido.equals(apellidoRenaper)) {
+            throw DomainException.of(
+                    AvistadorError.PADRON_NO_MATCH.key,
+                    AvistadorError.PADRON_NO_MATCH.status,
+                    "Los datos no coinciden con el padrón.");
         }
 
-        // 3) duplicado
-        if (repo.existsByDni(dni)) throw new DniDuplicadoException(dni);
+        // 5) Duplicado
+        if (repo.existsByDni(dni)) {
+            throw DomainException.of(
+                    AvistadorError.DNI_DUP.key,
+                    AvistadorError.DNI_DUP.status,
+                    "DNI ya registrado.");
+        }
 
-        // 4) dejar DTO normalizado
+        // 6) Dejar DTO normalizado
         dto.setDni(dni);
         dto.setNombre(nombre);
         dto.setApellido(apellido);
