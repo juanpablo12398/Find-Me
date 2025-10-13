@@ -18,3 +18,10 @@ img { max-width:80px; border-radius:6px; }
 
 .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 @media (max-width:600px){ .row { grid-template-columns:1fr; } }
+
+/* --- extras pequeños para la sección de login (no alteran lo existente) --- */
+.session-info { color:#666; font-size:.95rem; } /* alias a muted, si lo preferís */
+
+.divider { text-align:center; color:#666; margin:12px 0; font-size:.95rem; }
+
+.btn-secondary {padding:10px 16px; border-radius:6px; border:1px solid #ccc; background:#f5f5f5; cursor:pointer; width:100%;}

@@ -7,13 +7,11 @@ import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoRequest
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.net.URI;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/desaparecidos")
-@CrossOrigin(origins = "*") // según tu puerto front
 // http://localhost:63342
 // El local host para pruebas complejas en spring es:
 // http://localhost:8080/index.html

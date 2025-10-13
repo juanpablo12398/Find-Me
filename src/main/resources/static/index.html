@@ -7,13 +7,51 @@
 </head>
 <body>
 
-<h1>Find Me </h1>
+<h1>Find Me</h1>
 
 <nav>
     <button id="btnNavAvistador">Registrarme</button>
     <button id="btnNavForm">Registrar desaparecido</button>
     <button id="btnNavList">Ver lista</button>
+    <span style="flex:1"></span>
+    <button id="btnLogin">Iniciar sesión</button>
+    <button id="btnLogout" style="display:none;">Cerrar sesión</button>
 </nav>
+
+<div id="sessionStatus" class="muted" style="margin:10px 0;"></div>
+
+<!-- LOGIN (nueva sección, oculta por defecto como las demás) -->
+<section id="loginSection" class="">
+    <h2>Iniciar Sesión</h2>
+    <div id="loginMessage" class="muted"></div>
+
+    <form id="formLogin" novalidate>
+        <input
+                type="text"
+                id="login_dni"
+                placeholder="DNI (7 a 10 dígitos)"
+                pattern="[0-9]{7,10}"
+                inputmode="numeric"
+                maxlength="10"
+                required
+        />
+        <input
+                type="email"
+                id="login_email"
+                placeholder="Email registrado"
+                required
+        />
+        <button type="submit" id="btnLoginSubmit">Iniciar Sesión</button>
+    </form>
+
+    <div id="loginResult" class="muted"></div>
+
+    <div class="divider">— o —</div>
+
+    <button type="button" id="btnGoRegister" class="btn-secondary">
+        No tengo cuenta, quiero registrarme
+    </button>
+</section>
 
 <!-- AVISTADOR -->
 <section id="avistadorSection" class="">
@@ -29,7 +67,8 @@
         </div>
         <input type="text" id="a_direccion" placeholder="Dirección" required />
         <div class="row">
-            <input type="email" id="a_email" placeholder="Email (opcional)" />
+            <!-- Hacemos email requerido para que luego pueda loguear -->
+            <input type="email" id="a_email" placeholder="Email (importante para login)" required />
             <input type="tel" id="a_telefono" placeholder="Teléfono (opcional)" />
         </div>
         <button type="submit" id="btnAvistador">Registrarme</button>
@@ -72,6 +111,6 @@
     </table>
 </section>
 
-<script src="app-v11.js?v=11" defer></script>
+<script src="app-auth.js" defer></script>
 </body>
 </html>
