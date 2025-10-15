@@ -1,41 +1,60 @@
-package edu.utn.proyecto.domain.model.concreta;
+package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class Avistamiento {
-    private UUID id;
-    private UUID avistadorId;      // quién lo reportó
-    private UUID desaparecidoId;   // a quién vio
+@Entity
+@Table(name = "avistamientos", schema = "public")
+public class AvistamientoEntity {
 
-    // Datos geográficos
+    @Id
+    @GeneratedValue
+    private UUID id;
+
+    @Column(name = "avistador_id", nullable = false)
+    private UUID avistadorId;
+
+    @Column(name = "desaparecido_id", nullable = false)
+    private UUID desaparecidoId;
+
+    @Column(nullable = false)
     private Double latitud;
+
+    @Column(nullable = false)
     private Double longitud;
 
-    // Detalles del avistamiento
+    @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
+
+    @Column(columnDefinition = "TEXT")
     private String descripcion;
+
+    @Column(name = "foto_url")
     private String fotoUrl;
-    private Boolean verificado;
-    private Boolean publico;
+
+    @Column(nullable = false)
+    private Boolean verificado = false;
+
+    @Column(nullable = false)
+    private Boolean publico = true;
+
+    @Column(name = "creado_en", nullable = false)
     private LocalDateTime creadoEn;
 
-    public Avistamiento() {
-        this.id = UUID.randomUUID();
-        this.fechaHora = LocalDateTime.now();
-        this.creadoEn = LocalDateTime.now();
-        this.verificado = false;
-        this.publico = true;
-    }
+    public AvistamientoEntity() {}
 
-    // Constructor con datos mínimos
-    public Avistamiento(UUID avistadorId, UUID desaparecidoId,
-                        Double latitud, Double longitud, String descripcion) {
-        this();
+    public AvistamientoEntity(UUID id, UUID avistadorId, UUID desaparecidoId, Double latitud, Double longitud, LocalDateTime fechaHora, String descripcion, String fotoUrl, Boolean verificado, Boolean publico, LocalDateTime creadoEn) {
+        this.id = id;
         this.avistadorId = avistadorId;
         this.desaparecidoId = desaparecidoId;
         this.latitud = latitud;
         this.longitud = longitud;
+        this.fechaHora = fechaHora;
         this.descripcion = descripcion;
+        this.fotoUrl = fotoUrl;
+        this.verificado = verificado;
+        this.publico = publico;
+        this.creadoEn = creadoEn;
     }
 
     public UUID getId() { return id; }

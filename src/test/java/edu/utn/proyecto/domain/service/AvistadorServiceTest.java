@@ -13,8 +13,7 @@ import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.UUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,17 +26,17 @@ class AvistadorServiceTest {
     @Captor ArgumentCaptor<Avistador> avistadorCaptor;
 
     @Test
-    void registrar_orquesta_validate_mapear_save_y_mapearResponse() {
+    void registrar_orquesta_normalize_validate_mapear_save_y_mapearResponse() {
         var service = new AvistadorService(repo, mapper, policy);
 
         var req = new AvistadorRequestDTO();
-        req.setDni("12345678");
-        req.setNombre("ANA");
-        req.setApellido("PEREZ");
+        req.setDni(" 12.345.678 "); // sucio, para comprobar que se normaliza
+        req.setNombre(" ána ");
+        req.setApellido(" pérez ");
         req.setEdad(28);
-        req.setDireccion("Calle 1");
-        req.setEmail("a@a.com");
-        req.setTelefono("111");
+        req.setDireccion(" Calle 1 ");
+        req.setEmail("  a@a.com  ");
+        req.setTelefono(" 111 ");
 
         var domain = new Avistador(
                 UUID.randomUUID(), "12345678", "ANA", "PEREZ",
@@ -62,7 +61,8 @@ class AvistadorServiceTest {
 
         var out = service.registrar(req);
 
-        InOrder io = inOrder(policy, mapper, repo, mapper);
+        InOrder io = inOrder(mapper, policy, mapper, repo, mapper);
+        io.verify(mapper).normalizeRequestInPlace(req); // 👈 se usa normalización
         io.verify(policy).validate(req);
         io.verify(mapper).fromRequestToDomain(req);
         io.verify(repo).save(avistadorCaptor.capture());
@@ -79,8 +79,7 @@ class AvistadorServiceTest {
         var req = new AvistadorRequestDTO();
 
         doThrow(DomainException.of(AvistadorError.UNDERAGE.key,
-                AvistadorError.UNDERAGE.status,
-                "Debe ser mayor de edad"))
+                AvistadorError.UNDERAGE.status, "Debe ser mayor de edad"))
                 .when(policy).validate(req);
 
         assertThatThrownBy(() -> service.registrar(req))
@@ -91,7 +90,11 @@ class AvistadorServiceTest {
                     assertThat(de.getStatus()).isEqualTo(AvistadorError.UNDERAGE.status);
                 });
 
-        verify(policy).validate(req);
-        verifyNoInteractions(mapper, repo);
+        InOrder io = inOrder(mapper, policy);
+        io.verify(mapper).normalizeRequestInPlace(req); // 👈 se invoca igual
+        io.verify(policy).validate(req);
+        verifyNoInteractions(repo);
+        verify(mapper, never()).fromRequestToDomain(any());
+        verify(mapper, never()).fromDomainToResponse(any());
     }
 }

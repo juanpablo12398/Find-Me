@@ -1,15 +1,32 @@
 package edu.utn.proyecto.applicacion.mappers;
+import edu.utn.proyecto.common.normalize.DniNormalizer;
+import edu.utn.proyecto.common.normalize.TextNormalizer;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.SessionUserDTO;
 import org.springframework.stereotype.Component;
 
 @Component
 public class LoginMapper {
-    public SessionUserDTO fromLoginRequestToSession(LoginRequestDTO dto) {
+
+
+    private final DniNormalizer dniNorm;
+    private final TextNormalizer txtNorm;
+
+    public LoginMapper(DniNormalizer dniNorm, TextNormalizer txtNorm) {
+        this.dniNorm = dniNorm;
+        this.txtNorm = txtNorm;
+    }
+
+    public void normalizeRequestInPlace(LoginRequestDTO dto) {
+        dto.setDni(dniNorm.normalize(dto.getDni()));
+        dto.setEmail(dto.getEmail() == null ? "" : txtNorm.normalize(dto.getEmail()));
+    }
+
+    public SessionUserDTO fromLoginRequestToSession(LoginRequestDTO dto,String resolvedNombre) {
         return new SessionUserDTO(
                 dto.getDni(),
                 dto.getEmail(),
-                dto.getResolvedNombre()
+                resolvedNombre
         );
     }
 }

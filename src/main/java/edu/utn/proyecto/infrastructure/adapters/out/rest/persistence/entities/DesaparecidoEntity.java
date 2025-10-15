@@ -17,7 +17,7 @@ public class DesaparecidoEntity {
     private String descripcion;
     private String fotoUrl;
     private LocalDateTime fechaDesaparicion;
-    // …getters y setters…
+
     public DesaparecidoEntity() {}
 
     public DesaparecidoEntity(UUID id, String nombre, String apellido, String dni, String descripcion, String fotoUrl, LocalDateTime fechaDesaparicion) {

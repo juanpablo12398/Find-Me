@@ -6,6 +6,7 @@ import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import edu.utn.proyecto.infrastructure.ports.out.jpa.AvistadorJpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 public class RepositorioDeAvistadores implements IRepoDeAvistadores {
@@ -32,5 +33,10 @@ public class RepositorioDeAvistadores implements IRepoDeAvistadores {
     @Override
     public boolean existsByDni(String dni) {
         return jpa.findByDni(dni).isPresent();
+    }
+
+    @Override
+    public Optional<AvistadorEntity> findById(UUID uuid) {
+        return Optional.empty();
     }
 }

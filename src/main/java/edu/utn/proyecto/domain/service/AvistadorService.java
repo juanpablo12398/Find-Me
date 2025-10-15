@@ -25,10 +25,10 @@ public class AvistadorService {
 
     @Transactional
     public AvistadorResponseDTO registrar(AvistadorRequestDTO dto) {
-        // Solo orquesto:
+        mapper.normalizeRequestInPlace(dto);
         registrationPolicy.validate(dto);
-        var domain = mapper.fromRequestToDomain(dto); // dto ya viene normalizado
-        var saved = repo.save(domain);
+        var domain = mapper.fromRequestToDomain(dto);
+        var saved  = repo.save(domain);
         return mapper.fromDomainToResponse(saved);
     }
 }

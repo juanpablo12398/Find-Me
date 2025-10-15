@@ -13,7 +13,7 @@ public class CreateDesaparecidoUseCase {
     }
 
     public DesaparecidoResponseDTO execute(DesaparecidoRequestDTO dto) {
-        // Aca podría ir la excepción respectiva
+
         return desaparecidoService.crearDesaparecido(dto);
     }
 }

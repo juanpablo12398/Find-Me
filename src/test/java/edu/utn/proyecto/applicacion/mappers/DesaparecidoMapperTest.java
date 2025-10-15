@@ -1,42 +1,58 @@
 package edu.utn.proyecto.applicacion.mappers;
 import edu.utn.proyecto.applicacion.dtos.DesaparecidoResponseDTO;
+import edu.utn.proyecto.common.normalize.DateTimeNormalizer;
+import edu.utn.proyecto.common.normalize.DniNormalizer;
+import edu.utn.proyecto.common.normalize.TextNormalizer;
+import edu.utn.proyecto.common.normalize.UrlNormalizer;
 import edu.utn.proyecto.domain.model.concreta.Desaparecido;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoRequestDTO;
 import org.junit.jupiter.api.Test;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class DesaparecidoMapperTest {
 
-    private final DesaparecidoMapper mapper = new DesaparecidoMapper();
+    private final DesaparecidoMapper mapper = new DesaparecidoMapper(
+            new TextNormalizer(),
+            new DniNormalizer(),
+            new UrlNormalizer(),
+            new DateTimeNormalizer()
+    );
 
     @Test
-    void fromRequestToDomain_mapeaCamposBasicos() {
-        var req = new DesaparecidoRequestDTO("Ana", "Perez", 30, "12345678",
-                "http://foto", "Texto de descripcion");
+    void fromRequestToDomain_mapeaCamposBasicos_conNormalizacionPrevia() {
+        var req = new DesaparecidoRequestDTO(
+                "Ana", "Perez", 30, "12.345.678", " http://foto ",
+                "  Texto de descripcion  "
+        );
+
+        // Emular flujo real: normalizar antes
+        mapper.normalizeRequestInPlace(req);
         Desaparecido d = mapper.fromRequestToDomain(req);
 
-        assertThat(d.getNombre()).isEqualTo("Ana");
-        assertThat(d.getApellido()).isEqualTo("Perez");
-        assertThat(d.getDni()).isEqualTo("12345678");
-        assertThat(d.getFoto()).isEqualTo("http://foto");
-        assertThat(d.getDescripcion()).isEqualTo("Texto de descripcion");
+        assertThat(d.getNombre()).isEqualTo("ANA");            // upperNoAccents
+        assertThat(d.getApellido()).isEqualTo("PEREZ");        // upperNoAccents
+        assertThat(d.getDni()).isEqualTo("12345678");          // digits only
+        assertThat(d.getFoto()).isEqualTo("http://foto");      // trim + optional
+        assertThat(d.getDescripcion()).isEqualTo("Texto de descripcion"); // trim
     }
 
     @Test
-    void fromRequestListToDomainList_mapeaCadaElemento() {
+    void fromRequestListToDomainList_mapeaCadaElemento_conNormalizacionPrevia() {
         var reqs = List.of(
-                new DesaparecidoRequestDTO("A","B",20,"1","f1","d1"),
-                new DesaparecidoRequestDTO("C","D",21,"2","f2","d2")
+                new DesaparecidoRequestDTO("A","B",20,"1.1"," f1 "," d1 "),
+                new DesaparecidoRequestDTO("C","D",21,"2"," f2 "," d2 ")
         );
+
+        // normalizar cada elemento antes de mapear
+        reqs.forEach(mapper::normalizeRequestInPlace);
 
         var out = mapper.fromRequestToDomain(reqs);
         assertThat(out).hasSize(2);
         assertThat(out.get(0).getNombre()).isEqualTo("A");
+        assertThat(out.get(0).getDni()).isEqualTo("11");
         assertThat(out.get(1).getDni()).isEqualTo("2");
     }
 
@@ -88,12 +104,20 @@ class DesaparecidoMapperTest {
     }
 
     @Test
-    void fromResponseListToFrontList_ok() {
-        var r1 = new DesaparecidoResponseDTO(UUID.randomUUID(),"A","B","1", LocalDateTime.now(),"d1","f1");
-        var r2 = new DesaparecidoResponseDTO(UUID.randomUUID(),"C","D","2", LocalDateTime.now(),"d2","f2");
-
-        var out = mapper.fromResponseListToFrontList(List.of(r1, r2));
-        assertThat(out).hasSize(2);
-        assertThat(out.get(0).getNombre()).isEqualTo("A");
+    void normalizeRequestInPlace_esIdempotente() {
+        var req = new DesaparecidoRequestDTO(
+                "Ána", "Pérez", 30, "12.345.678", "  http://f  ",
+                "  Texto  "
+        );
+        mapper.normalizeRequestInPlace(req);
+        var snapshot = List.of(
+                req.getNombre(), req.getApellido(), req.getDni(),
+                req.getFotoUrl(), req.getDescripcion()
+        );
+        mapper.normalizeRequestInPlace(req);
+        assertThat(List.of(
+                req.getNombre(), req.getApellido(), req.getDni(),
+                req.getFotoUrl(), req.getDescripcion()
+        )).isEqualTo(snapshot);
     }
 }

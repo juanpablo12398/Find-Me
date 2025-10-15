@@ -1,15 +1,39 @@
 package edu.utn.proyecto.applicacion.mappers;
 import edu.utn.proyecto.applicacion.dtos.AvistadorResponseDTO;
+import edu.utn.proyecto.common.normalize.DniNormalizer;
+import edu.utn.proyecto.common.normalize.TextNormalizer;
 import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AvistadorMapperTest {
 
-    private final AvistadorMapper mapper = new AvistadorMapper();
+    private final AvistadorMapper mapper =
+            new AvistadorMapper(new DniNormalizer(), new TextNormalizer());
+
+    @Test
+    void normalizeRequestInPlace_normaliza_dni_nombres_y_campos_blandos() {
+        var req = new AvistadorRequestDTO();
+        req.setDni("  12.345.678 ");
+        req.setNombre("  ána ");
+        req.setApellido(" pérez  ");
+        req.setEdad(28);
+        req.setDireccion("  Calle 123  ");
+        req.setEmail("  User@Mail.com  ");
+        req.setTelefono("  111-222  ");
+
+        mapper.normalizeRequestInPlace(req);
+
+        assertThat(req.getDni()).isEqualTo("12345678");
+        assertThat(req.getNombre()).isEqualTo("ANA");     // sin acentos + mayúsculas
+        assertThat(req.getApellido()).isEqualTo("PEREZ"); // sin acentos + mayúsculas
+        assertThat(req.getDireccion()).isEqualTo("Calle 123"); // trim
+        assertThat(req.getEmail()).isEqualTo("User@Mail.com"); // trim (sin cambiar case)
+        assertThat(req.getTelefono()).isEqualTo("111-222");     // trim
+        assertThat(req.getEdad()).isEqualTo(28);
+    }
 
     @Test
     void fromRequestToDomain_copiaCampos_ySeteaCreadoEnAhora() {
@@ -34,11 +58,7 @@ class AvistadorMapperTest {
         assertThat(domain.getEmail()).isEqualTo("ana@x.com");
         assertThat(domain.getTelefono()).isEqualTo("111-222");
         assertThat(domain.getCreadoEn()).isNotNull();
-        // dentro de una ventana razonable
-        assertThat(!domain.getCreadoEn().isBefore(t0) && !domain.getCreadoEn().isAfter(t1))
-                .as("creadoEn debe estar entre t0 y t1")
-                .isTrue();
-        // o: assertThat(Duration.between(t0, domain.getCreadoEn())).isLessThan(Duration.ofSeconds(2));
+        assertThat(!domain.getCreadoEn().isBefore(t0) && !domain.getCreadoEn().isAfter(t1)).isTrue();
     }
 
     @Test

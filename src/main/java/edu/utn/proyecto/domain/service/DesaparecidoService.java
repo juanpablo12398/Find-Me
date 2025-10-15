@@ -16,6 +16,7 @@ public class DesaparecidoService {
     private final DesaparecidoMapper mapper;
     private final Validator<DesaparecidoRequestDTO> createPolicy;
 
+
     public DesaparecidoService(IRepoDeDesaparecidos repo,
                                DesaparecidoMapper mapper,
                                DesaparecidoCreatePolicy createPolicy) {
@@ -26,6 +27,7 @@ public class DesaparecidoService {
 
     @Transactional
     public DesaparecidoResponseDTO crearDesaparecido(DesaparecidoRequestDTO dto) {
+        mapper.normalizeRequestInPlace(dto);
         createPolicy.validate(dto);
         var domain = mapper.fromRequestToDomain(dto);
         var saved = repo.save(domain);

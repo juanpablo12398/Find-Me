@@ -6,4 +6,5 @@ import java.util.UUID;
 
 public interface AvistadorJpaRepository extends JpaRepository<AvistadorEntity, UUID> {
     Optional<AvistadorEntity> findByDni(String dni);
+    Optional<AvistadorEntity> findById(UUID uuid);
 }

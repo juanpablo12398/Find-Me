@@ -60,13 +60,12 @@ class DesaparecidoServiceTest {
     }
 
     @Test
-    void crearDesaparecido_siPolicyFalla_noMapeaNiGuarda_yPropagaDomainException() {
+    void crearDesaparecido_siPolicyFalla_normaliza_pero_noMapeaNiGuarda_yPropagaDomainException() {
         var service = new DesaparecidoService(repo, mapper, policy);
         var req = new DesaparecidoRequestDTO("A","B",20,"1","f","d");
 
         doThrow(DomainException.of(DesaparecidoError.DNI_DUP.key,
-                DesaparecidoError.DNI_DUP.status,
-                "Duplicado"))
+                DesaparecidoError.DNI_DUP.status, "Duplicado"))
                 .when(policy).validate(req);
 
         assertThatThrownBy(() -> service.crearDesaparecido(req))
@@ -77,8 +76,12 @@ class DesaparecidoServiceTest {
                     assertThat(de.getStatus()).isEqualTo(DesaparecidoError.DNI_DUP.status);
                 });
 
-        verify(policy).validate(req);
-        verifyNoInteractions(mapper, repo);
+        InOrder io = inOrder(mapper, policy);
+        io.verify(mapper).normalizeRequestInPlace(req);
+        io.verify(policy).validate(req);
+
+        verifyNoInteractions(repo);
+        verifyNoMoreInteractions(mapper);
     }
 
     @Test

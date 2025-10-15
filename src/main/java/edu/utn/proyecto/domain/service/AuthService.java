@@ -4,6 +4,9 @@ import edu.utn.proyecto.applicacion.validation.auth.LoginPolicy;
 import edu.utn.proyecto.common.validation.abstraccion.Validator;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.SessionUserDTO;
+import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.RenaperPersonaEntity;
+import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
+import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,17 +15,28 @@ public class AuthService {
 
     private final Validator<LoginRequestDTO> loginPolicy;
     private final LoginMapper mapper;
+    private final IRepoDeRenaper renaper;
+    private final IRepoDeAvistadores repoAvistadores;
 
-    public AuthService(LoginPolicy policy, LoginMapper mapper) {
+    public AuthService(LoginPolicy policy,
+                       LoginMapper mapper,
+                       IRepoDeRenaper renaper,
+                       IRepoDeAvistadores repoAvistadores) {
         this.loginPolicy = policy;
         this.mapper = mapper;
+        this.renaper = renaper;
+        this.repoAvistadores = repoAvistadores;
     }
 
     @Transactional(readOnly = true)
     public SessionUserDTO login(LoginRequestDTO dto) {
-        // Toda la lógica vive en la Policy
+        mapper.normalizeRequestInPlace(dto);
         loginPolicy.validate(dto);
-        // El DTO ya viene normalizado y enriquecido; mapeo a SessionUserDTO
-        return mapper.fromLoginRequestToSession(dto);
+        // Ya se que existe por que policy lo valido
+        var avistador = repoAvistadores.findByDni(dto.getDni()).orElseThrow();
+        String resolvedNombre = (avistador.getNombre() != null && !avistador.getNombre().isBlank())
+                ? avistador.getNombre()
+                : renaper.findByDni(dto.getDni()).map(RenaperPersonaEntity::getNombre).orElse(null);
+        return mapper.fromLoginRequestToSession(dto,resolvedNombre);
     }
 }
