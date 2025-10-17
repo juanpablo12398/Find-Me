@@ -1,4 +1,4 @@
-package edu.utn.proyecto.common.validation.concreta;
+package edu.utn.proyecto.common.validation.concreta.avistador.rules;
 import edu.utn.proyecto.avistador.exception.AvistadorError;
 import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;

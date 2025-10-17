@@ -26,30 +26,13 @@ public class LoginPolicy implements Validator<LoginRequestDTO> {
 
     @Override
     public void validate(LoginRequestDTO dto) {
-        // 1) Reglas (formato, requeridos, etc.)
-        for (var r : rules) r.check(dto);
 
-        // 2) Debe existir en RENAPER
-        var persona = renaper.findByDni(dto.getDni()).orElseThrow(() ->
-                DomainException.of(AuthError.PADRON_NOT_FOUND.key,
-                        AuthError.PADRON_NOT_FOUND.status,
-                        "No existe en padrón (RENAPER).")
-        );
-
-        // 3) Debe existir avistador
-        var avistador = repo.findByDni(dto.getDni()).orElseThrow(() ->
-                DomainException.of(AuthError.USER_NOT_FOUND.key,
-                        AuthError.USER_NOT_FOUND.status,
-                        "Usuario no registrado.")
-        );
-
-        // 4) Email debe coincidir (case-insensitive; dto ya viene trim)
-        String emailGuardado = avistador.getEmail() == null ? "" : avistador.getEmail().trim();
-        String emailRequest  = dto.getEmail() == null ? "" : dto.getEmail().trim();
-        if (!emailGuardado.equalsIgnoreCase(emailRequest)) {
-            throw DomainException.of(AuthError.EMAIL_MISMATCH.key,
-                    AuthError.EMAIL_MISMATCH.status,
-                    "El email no coincide con el registrado.");
+        // Spring inyecta automáticamente:
+        // - LoginRenaperExistsRule (existe en RENAPER)
+        // - LoginAvistadorExistsRule (usuario registrado)
+        // - LoginEmailMatchRule (email coincide)
+        for (var rule : rules) {
+            rule.check(dto);
         }
     }
 }

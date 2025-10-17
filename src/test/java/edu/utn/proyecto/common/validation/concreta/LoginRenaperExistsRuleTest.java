@@ -1,5 +1,6 @@
 package edu.utn.proyecto.common.validation.concreta;
 import edu.utn.proyecto.common.exception.DomainException;
+import edu.utn.proyecto.common.validation.concreta.login.rules.LoginRenaperExistsRule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
 import org.junit.jupiter.api.BeforeEach;

@@ -3,6 +3,7 @@ import edu.utn.proyecto.applicacion.dtos.AvistamientoResponseDTO;
 import edu.utn.proyecto.applicacion.mappers.AvistamientoMapper;
 import edu.utn.proyecto.applicacion.validation.avistamiento.AvistamientoCreatePolicy;
 import edu.utn.proyecto.common.validation.abstraccion.Validator;
+import edu.utn.proyecto.domain.model.concreta.Avistamiento;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoFrontDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
@@ -24,11 +25,12 @@ public class AvistamientoService {
     private final AvistamientoMapper mapper;
     private final Validator<AvistamientoRequestDTO> createPolicy;
 
-    public AvistamientoService(IRepoDeAvistamientos repo,
-                               IRepoDeAvistadores repoAvistadores,
-                               IRepoDeDesaparecidos repoDesaparecidos,
-                               AvistamientoMapper mapper,
-                               AvistamientoCreatePolicy createPolicy) {
+    public AvistamientoService(
+            IRepoDeAvistamientos repo,
+            IRepoDeAvistadores repoAvistadores,
+            IRepoDeDesaparecidos repoDesaparecidos,
+            AvistamientoMapper mapper,
+            AvistamientoCreatePolicy createPolicy) {
         this.repoAvistamientos = repo;
         this.repoAvistadores = repoAvistadores;
         this.repoDesaparecidos = repoDesaparecidos;
@@ -36,6 +38,9 @@ public class AvistamientoService {
         this.createPolicy = createPolicy;
     }
 
+    // ============================================
+    // CREAR
+    // ============================================
     @Transactional
     public AvistamientoResponseDTO crearAvistamiento(AvistamientoRequestDTO dto) {
         mapper.normalizeRequestInPlace(dto);
@@ -44,7 +49,9 @@ public class AvistamientoService {
         return mapper.fromDomainToResponse(saved);
     }
 
-
+    // ============================================
+    // LEER - ResponseDTO simple (sin enriquecer)
+    // ============================================
     @Transactional(readOnly = true)
     public List<AvistamientoResponseDTO> obtenerAvistamientosPublicos() {
         var lista = repoAvistamientos.findPublicos();
@@ -72,19 +79,46 @@ public class AvistamientoService {
         return mapper.fromDomainListToResponseList(lista);
     }
 
+    // ============================================
+    // LEER - FrontDTO enriquecido (para el mapa)
+    // ============================================
     @Transactional(readOnly = true)
     public List<AvistamientoFrontDTO> obtenerParaMapa() {
-        return repoAvistamientos.findPublicos().stream().map(a -> {
-            var desaparecido = repoDesaparecidos.findById(a.getDesaparecidoId()).orElseThrow();
-            var avistador = repoAvistadores.findById(a.getAvistadorId()).orElseThrow();
+        return enrichAvistamientos(repoAvistamientos.findPublicos());
+    }
 
-            AvistamientoFrontDTO base = mapper.fromDomainToFrontBasic(a);
-            base.setDesaparecidoId(desaparecido.getId());
-            base.setDesaparecidoNombre(desaparecido.getNombre());
-            base.setDesaparecidoApellido(desaparecido.getApellido());
-            base.setDesaparecidoFoto(desaparecido.getFoto());
-            base.setAvistadorNombre(avistador.getNombre());
-            return base;
+    @Transactional(readOnly = true)
+    public List<AvistamientoFrontDTO> obtenerPorDesaparecidoEnriquecido(UUID desaparecidoId) {
+        return enrichAvistamientos(repoAvistamientos.findByDesaparecidoId(desaparecidoId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<AvistamientoFrontDTO> obtenerEnAreaEnriquecido(
+            Double latMin, Double latMax,
+            Double lngMin, Double lngMax) {
+        return enrichAvistamientos(
+                repoAvistamientos.findInBounds(latMin, latMax, lngMin, lngMax)
+        );
+    }
+
+    // ============================================
+    // MÉTODO PRIVADO: Enriquecer avistamientos
+    // (reutilizable para todos los casos)
+    // ============================================
+    private List<AvistamientoFrontDTO> enrichAvistamientos(List<Avistamiento> avistamientos) {
+        return avistamientos.stream().map(a -> {
+            var desaparecido = repoDesaparecidos.findById(a.getDesaparecidoId())
+                    .orElseThrow(() -> new RuntimeException("Desaparecido no encontrado"));
+            var avistador = repoAvistadores.findById(a.getAvistadorId())
+                    .orElseThrow(() -> new RuntimeException("Avistador no encontrado"));
+
+            AvistamientoFrontDTO front = mapper.fromDomainToFrontBasic(a);
+            front.setDesaparecidoId(desaparecido.getId());
+            front.setDesaparecidoNombre(desaparecido.getNombre());
+            front.setDesaparecidoApellido(desaparecido.getApellido());
+            front.setDesaparecidoFoto(desaparecido.getFoto());
+            front.setAvistadorNombre(avistador.getNombre());
+            return front;
         }).collect(Collectors.toList());
     }
 }

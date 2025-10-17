@@ -1,5 +1,6 @@
 package edu.utn.proyecto.common.validation.concreta;
 import edu.utn.proyecto.common.exception.DomainException;
+import edu.utn.proyecto.common.validation.concreta.login.rules.LoginEmailMatchRule;
 import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
@@ -16,11 +17,11 @@ import static org.mockito.Mockito.when;
 class LoginAvistadorEmailRuleTest {
 
     @Mock IRepoDeAvistadores repo;
-    LoginAvistadorEmailRule rule;
+    LoginEmailMatchRule rule;
 
     @BeforeEach
     void setUp() {
-        rule = new LoginAvistadorEmailRule(repo);
+        rule = new LoginEmailMatchRule(repo);
     }
 
     @Test

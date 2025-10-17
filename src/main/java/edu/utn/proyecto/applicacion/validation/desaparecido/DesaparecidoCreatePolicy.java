@@ -22,15 +22,12 @@ public class DesaparecidoCreatePolicy implements Validator<DesaparecidoRequestDT
 
     @Override
     public void validate(DesaparecidoRequestDTO dto) {
-        for (var r : rules) r.check(dto);
 
-        // Ya viene normalizado desde el service.
-        if (repo.existsByDni(dto.getDni())) {
-            throw DomainException.of(
-                    DesaparecidoError.DNI_DUP.key,
-                    DesaparecidoError.DNI_DUP.status,
-                    dto.getDni()
-            );
+        // Spring inyecta:
+        // - DesaparecidoLengthRule
+        // - DesaparecidoDniDuplicadoRule
+        for (var rule : rules) {
+            rule.check(dto);
         }
     }
 }

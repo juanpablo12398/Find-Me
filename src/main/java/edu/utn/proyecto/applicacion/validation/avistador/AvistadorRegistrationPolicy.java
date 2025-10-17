@@ -29,35 +29,14 @@ public class AvistadorRegistrationPolicy implements Validator<AvistadorRequestDT
 
     @Override
     public void validate(AvistadorRequestDTO dto) {
-        // 1) Reglas negocio (incluye edad, formatos, etc.)
-        for (var r : rules) r.check(dto);
 
-        // 2) RENAPER: existencia
-        var persona = renaper.findByDni(dto.getDni())
-                .orElseThrow(() -> DomainException.of(
-                        AvistadorError.PADRON_NOT_FOUND.key,
-                        AvistadorError.PADRON_NOT_FOUND.status,
-                        "No existe en padrón (RENAPER)."));
-
-        // 3) RENAPER: coincidencia (comparación canónica, sin mutar el dto)
-        String dtoNombre    = dto.getNombre();
-        String dtoApellido  = dto.getApellido();
-        String renNombre    = persona.getNombre();
-        String renApellido  = persona.getApellido();
-
-        if (!dtoNombre.equals(renNombre) || !dtoApellido.equals(renApellido)) {
-            throw DomainException.of(
-                    AvistadorError.PADRON_NO_MATCH.key,
-                    AvistadorError.PADRON_NO_MATCH.status,
-                    "Los datos no coinciden con el padrón.");
-        }
-
-        // 4) Duplicado por DNI
-        if (repo.existsByDni(dto.getDni())) {
-            throw DomainException.of(
-                    AvistadorError.DNI_DUP.key,
-                    AvistadorError.DNI_DUP.status,
-                    "DNI ya registrado.");
+        // Spring inyecta automáticamente:
+        // - AvistadorAgeRule (edad >= 18)
+        // - AvistadorRenaperExistsRule (existe en RENAPER)
+        // - AvistadorRenaperMatchRule (datos coinciden con RENAPER)
+        // - AvistadorDniDuplicadoRule (DNI no duplicado)
+        for (var rule : rules) {
+            rule.check(dto);
         }
     }
 }
