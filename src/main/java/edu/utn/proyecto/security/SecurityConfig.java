@@ -36,6 +36,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(reg -> reg
                         // Estáticos y auth públicos
                         .requestMatchers("/", "/index.html", "/style.css", "/script.js", "/*.js", "/*.css").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/js/**", "/css/**", "/images/**", "/assets/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // Desaparecidos: GET público, POST autenticado
@@ -44,7 +45,6 @@ public class SecurityConfig {
 
                         // Registro de avistadores público (auto-login después)
                         .requestMatchers(HttpMethod.POST, "/api/avistadores").permitAll()
-
 
                         .anyRequest().authenticated()
                 );

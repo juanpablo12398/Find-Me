@@ -101,6 +101,12 @@ public class AvistamientoService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public List<AvistamientoFrontDTO> obtenerRecientesEnriquecido(int dias) {
+        LocalDateTime desde = LocalDateTime.now().minusDays(dias);
+        return enrichAvistamientos(repoAvistamientos.findRecientes(desde));
+    }
+
     // ============================================
     // MÉTODO PRIVADO: Enriquecer avistamientos
     // (reutilizable para todos los casos)

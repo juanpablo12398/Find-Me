@@ -3,18 +3,15 @@ import edu.utn.proyecto.avistador.exception.AvistadorError;
 import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
-import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.RenaperPersonaEntity;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.List;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,94 +30,64 @@ class AvistadorRegistrationPolicyTest {
     }
 
     @Test
-    void happyPath_reglas_ok_renaperOk_noDuplicado() {
-        // DTO YA normalizado por el mapper antes de validate()
-        var dto = buildDto("12345678", "ANA", "PEREZ");
-
-        var persona = new RenaperPersonaEntity();
-        persona.setDni("12345678");
-        persona.setNombre("ANA");   // ya normalizado como acordaste
-        persona.setApellido("PEREZ");
-
-        when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
-        when(repo.existsByDni("12345678")).thenReturn(false);
+    void happyPath_ejecuta_reglas() {
+        var dto = buildDto();
 
         policy.validate(dto);
 
         verify(rule1).check(dto);
         verify(rule2).check(dto);
-        verify(renaper).findByDni("12345678");
-        verify(repo).existsByDni("12345678");
-        verifyNoMoreInteractions(renaper, repo);
+        verifyNoInteractions(renaper, repo);
     }
 
     @Test
-    void lanzaNotFound_siNoExisteEnRenaper() {
-        var dto = buildDto("12345678", "ANA", "PEREZ");
-        when(renaper.findByDni("12345678")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> policy.validate(dto))
-                .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException)e).getKey())
-                .isEqualTo(AvistadorError.PADRON_NOT_FOUND.key);
-
-        verify(renaper).findByDni("12345678");
-        verifyNoInteractions(repo);
-    }
-
-    @Test
-    void lanzaNoMatch_siNombreApellidoNoCoincidenConRenaper() {
-        var dto = buildDto("12345678", "ANA", "PEREZ");
-        var persona = new RenaperPersonaEntity();
-        persona.setDni("12345678");
-        persona.setNombre("OTRO");
-        persona.setApellido("PEREZ");
-
-        when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
-
-        assertThatThrownBy(() -> policy.validate(dto))
-                .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException)e).getKey())
-                .isEqualTo(AvistadorError.PADRON_NO_MATCH.key);
-    }
-
-    @Test
-    void lanzaConflict_siDniDuplicado() {
-        var dto = buildDto("12345678", "ANA", "PEREZ");
-
-        var persona = new RenaperPersonaEntity();
-        persona.setDni("12345678");
-        persona.setNombre("ANA");
-        persona.setApellido("PEREZ");
-
-        when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
-        when(repo.existsByDni("12345678")).thenReturn(true);
-
-        assertThatThrownBy(() -> policy.validate(dto))
-                .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException)e).getKey())
-                .isEqualTo(AvistadorError.DNI_DUP.key);
-    }
-
-    @Test
-    void propagaError_deReglaDeNegocio() {
-        var dto = buildDto("12345678", "ANA", "PEREZ");
-        doThrow(DomainException.of(AvistadorError.UNDERAGE.key, AvistadorError.UNDERAGE.status, ""))
+    void propaga_PADRON_NOT_FOUND() {
+        var dto = buildDto();
+        doThrow(DomainException.of(AvistadorError.PADRON_NOT_FOUND.key, AvistadorError.PADRON_NOT_FOUND.status, ""))
                 .when(rule1).check(dto);
 
         assertThatThrownBy(() -> policy.validate(dto))
                 .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException)e).getKey())
-                .isEqualTo(AvistadorError.UNDERAGE.key);
+                .extracting(e -> ((DomainException) e).getKey())
+                .isEqualTo(AvistadorError.PADRON_NOT_FOUND.key);
 
+        verify(rule1).check(dto);
+        verify(rule2, never()).check(dto);
         verifyNoInteractions(renaper, repo);
     }
 
-    private AvistadorRequestDTO buildDto(String dni, String nombre, String apellido) {
+    @Test
+    void propaga_PADRON_NO_MATCH() {
+        var dto = buildDto();
+        doThrow(DomainException.of(AvistadorError.PADRON_NO_MATCH.key, AvistadorError.PADRON_NO_MATCH.status, ""))
+                .when(rule1).check(dto);
+
+        assertThatThrownBy(() -> policy.validate(dto))
+                .isInstanceOf(DomainException.class)
+                .extracting(e -> ((DomainException) e).getKey())
+                .isEqualTo(AvistadorError.PADRON_NO_MATCH.key);
+    }
+
+    @Test
+    void propaga_DNI_DUP() {
+        var dto = buildDto();
+        doThrow(DomainException.of(AvistadorError.DNI_DUP.key, AvistadorError.DNI_DUP.status, ""))
+                .when(rule2).check(dto);
+
+        assertThatThrownBy(() -> policy.validate(dto))
+                .isInstanceOf(DomainException.class)
+                .extracting(e -> ((DomainException) e).getKey())
+                .isEqualTo(AvistadorError.DNI_DUP.key);
+
+        verify(rule1).check(dto); // pasó la primera
+        verify(rule2).check(dto);
+    }
+
+    private AvistadorRequestDTO buildDto() {
         var dto = new AvistadorRequestDTO();
-        dto.setDni(dni);
-        dto.setNombre(nombre);
-        dto.setApellido(apellido);
+        dto.setDni("12345678");
+        dto.setNombre("ANA");
+        dto.setApellido("PEREZ");
         dto.setEdad(25);
         dto.setDireccion("Calle 123");
         dto.setEmail("a@a.com");

@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -28,33 +30,23 @@ class DesaparecidoCreatePolicyTest {
     }
 
     @Test
-    void happyPath_ejecutaReglas_y_noDuplica() {
-        // DTO YA normalizado (como lo deja el service + mapper)
-        var dto = new DesaparecidoRequestDTO(
-                "ANA", "PEREZ", 30, "12345678", "http://x",
-                "descripcion suficientemente larga..."
-        );
-
-        when(repo.existsByDni("12345678")).thenReturn(false);
+    void happyPath_ejecuta_reglas() {
+        var dto = new DesaparecidoRequestDTO("ANA", "PEREZ", 30, "12345678", "http://x",
+                "descripcion suficientemente larga...");
 
         policy.validate(dto);
 
         verify(rule1).check(dto);
         verify(rule2).check(dto);
-        verify(repo).existsByDni("12345678");
-        verifyNoMoreInteractions(repo);
+        verifyNoInteractions(repo);
     }
 
     @Test
-    void lanzaExcepcion_siAlgunaReglaFalla() {
-        var dto = new DesaparecidoRequestDTO(
-                "ANA", "PEREZ", 30, "12345678", null, "desc muy corta"
-        );
+    void propaga_DESC_SHORT_si_regla_falla() {
+        var dto = new DesaparecidoRequestDTO("ANA", "PEREZ", 30, "12345678", null, "desc muy corta");
 
-        doThrow(DomainException.of(
-                DesaparecidoError.DESC_SHORT.key,
-                DesaparecidoError.DESC_SHORT.status, ""
-        )).when(rule1).check(dto);
+        doThrow(DomainException.of(DesaparecidoError.DESC_SHORT.key, DesaparecidoError.DESC_SHORT.status, ""))
+                .when(rule1).check(dto);
 
         assertThatThrownBy(() -> policy.validate(dto))
                 .isInstanceOf(DomainException.class)
@@ -70,13 +62,12 @@ class DesaparecidoCreatePolicyTest {
     }
 
     @Test
-    void lanzaConflict_siDniDuplicado() {
-        var dto = new DesaparecidoRequestDTO(
-                "ANA", "PEREZ", 30, "12345678", "http://x",
-                "descripcion suficientemente larga..."
-        );
+    void propaga_DNI_DUP_si_regla_falla() {
+        var dto = new DesaparecidoRequestDTO("ANA", "PEREZ", 30, "12345678", "http://x",
+                "descripcion suficientemente larga...");
 
-        when(repo.existsByDni("12345678")).thenReturn(true);
+        doThrow(DomainException.of(DesaparecidoError.DNI_DUP.key, DesaparecidoError.DNI_DUP.status, ""))
+                .when(rule2).check(dto);
 
         assertThatThrownBy(() -> policy.validate(dto))
                 .isInstanceOf(DomainException.class)
@@ -86,6 +77,7 @@ class DesaparecidoCreatePolicyTest {
                             .isEqualTo(DesaparecidoError.DNI_DUP.key);
                 });
 
-        verify(repo).existsByDni("12345678");
+        verify(rule1).check(dto);
+        verify(rule2).check(dto);
     }
 }

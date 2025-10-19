@@ -2,31 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Find Me – SPA Básica</title>
     <link rel="stylesheet" href="style.css" />
+
+    <!-- ✨ Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin="" />
 </head>
 <body>
 
 <h1>Find Me</h1>
 
-<nav>
-    <button id="btnNavAvistador">Registrarme</button>
-    <button id="btnNavForm">Registrar desaparecido</button>
-    <button id="btnNavList">Ver lista</button>
+<!-- Navegación -->
+<nav class="nav">
+    <button class="nav__button" id="btnNavAvistador">Registrarme</button>
+    <button class="nav__button" id="btnNavForm">Registrar desaparecido</button>
+    <button class="nav__button" id="btnNavList">Ver lista</button>
+    <button class="nav__button" id="btnNavMapa">🗺️ Mapa</button>
     <span style="flex:1"></span>
-    <button id="btnLogin">Iniciar sesión</button>
-    <button id="btnLogout" style="display:none;">Cerrar sesión</button>
+    <button class="nav__button" id="btnLogin">Iniciar sesión</button>
+    <button class="nav__button u-hidden" id="btnLogout">Cerrar sesión</button>
 </nav>
 
-<div id="sessionStatus" class="muted" style="margin:10px 0;"></div>
+<div class="session-status" id="sessionStatus"></div>
 
-<!-- LOGIN (nueva sección, oculta por defecto como las demás) -->
-<section id="loginSection" class="">
+<!-- ============================================ -->
+<!-- SECCIÓN: LOGIN -->
+<!-- ============================================ -->
+<section class="section" id="loginSection">
     <h2>Iniciar Sesión</h2>
-    <div id="loginMessage" class="muted"></div>
+    <div class="u-text-muted u-mb-2" id="loginMessage"></div>
 
     <form id="formLogin" novalidate>
         <input
+                class="form__input"
                 type="text"
                 id="login_dni"
                 placeholder="DNI (7 a 10 dígitos)"
@@ -36,81 +47,127 @@
                 required
         />
         <input
+                class="form__input"
                 type="email"
                 id="login_email"
                 placeholder="Email registrado"
                 required
         />
-        <button type="submit" id="btnLoginSubmit">Iniciar Sesión</button>
+        <button class="button button--primary" type="submit" id="btnLoginSubmit">
+            Iniciar Sesión
+        </button>
     </form>
 
-    <div id="loginResult" class="muted"></div>
+    <div class="form__message" id="loginResult"></div>
 
     <div class="divider">— o —</div>
 
-    <button type="button" id="btnGoRegister" class="btn-secondary">
+    <button type="button" class="button button--secondary" id="btnGoRegister">
         No tengo cuenta, quiero registrarme
     </button>
 </section>
 
-<!-- AVISTADOR -->
-<section id="avistadorSection" class="">
+<!-- ============================================ -->
+<!-- SECCIÓN: REGISTRAR AVISTADOR -->
+<!-- ============================================ -->
+<section class="section" id="avistadorSection">
     <h2>Crear mi cuenta (Avistador)</h2>
     <form id="formAvistador" novalidate>
-        <div class="row">
-            <input type="text" id="a_nombre" placeholder="Nombre" required />
-            <input type="text" id="a_apellido" placeholder="Apellido" required />
+        <div class="form__row">
+            <input class="form__input" type="text" id="a_nombre" placeholder="Nombre" required />
+            <input class="form__input" type="text" id="a_apellido" placeholder="Apellido" required />
         </div>
-        <div class="row">
-            <input type="text" id="a_dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required />
-            <input type="number" id="a_edad" placeholder="Edad" min="0" required />
+        <div class="form__row">
+            <input class="form__input" type="text" id="a_dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required />
+            <input class="form__input" type="number" id="a_edad" placeholder="Edad" min="0" required />
         </div>
-        <input type="text" id="a_direccion" placeholder="Dirección" required />
-        <div class="row">
-            <!-- Hacemos email requerido para que luego pueda loguear -->
-            <input type="email" id="a_email" placeholder="Email (importante para login)" required />
-            <input type="tel" id="a_telefono" placeholder="Teléfono (opcional)" />
+        <input class="form__input" type="text" id="a_direccion" placeholder="Dirección" required />
+        <div class="form__row">
+            <input class="form__input" type="email" id="a_email" placeholder="Email (importante para login)" required />
+            <input class="form__input" type="tel" id="a_telefono" placeholder="Teléfono (opcional)" />
         </div>
-        <button type="submit" id="btnAvistador">Registrarme</button>
+        <button class="button button--primary" type="submit" id="btnAvistador">
+            Registrarme
+        </button>
     </form>
-    <div id="outAvistador" class="muted"></div>
+    <div class="form__message" id="outAvistador"></div>
 </section>
 
-<!-- FORMULARIO DESAPARECIDO -->
-<section id="formSection" class="active">
+<!-- ============================================ -->
+<!-- SECCIÓN: REGISTRAR DESAPARECIDO -->
+<!-- ============================================ -->
+<section class="section section--active" id="formSection">
     <h2>Registrar Persona Desaparecida</h2>
     <form id="formDesaparecido" novalidate>
-        <div class="row">
-            <input type="text" id="nombre" placeholder="Nombre" required />
-            <input type="text" id="apellido" placeholder="Apellido" required />
+        <div class="form__row">
+            <input class="form__input" type="text" id="nombre" placeholder="Nombre" required />
+            <input class="form__input" type="text" id="apellido" placeholder="Apellido" required />
         </div>
-        <div class="row">
-            <input type="number" id="edad" placeholder="Edad" min="0" required />
-            <input type="text" id="dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required/>
+        <div class="form__row">
+            <input class="form__input" type="number" id="edad" placeholder="Edad" min="0" required />
+            <input class="form__input" type="text" id="dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required/>
         </div>
-        <textarea id="descripcion" placeholder="Descripción" required></textarea>
-        <input type="url" id="fotoUrl" placeholder="URL de la Foto (opcional)" />
-        <button type="submit" id="btnSubmit">Enviar</button>
+        <textarea class="form__textarea" id="descripcion" placeholder="Descripción" required></textarea>
+        <input class="form__input" type="url" id="fotoUrl" placeholder="URL de la Foto (opcional)" />
+        <button class="button button--primary" type="submit" id="btnSubmit">
+            Enviar
+        </button>
     </form>
-    <div id="resultado" class="muted"></div>
+    <div class="form__message" id="resultado"></div>
 </section>
 
-<!-- LISTADO -->
-<section id="listSection">
+<!-- ============================================ -->
+<!-- SECCIÓN: LISTA DE DESAPARECIDOS -->
+<!-- ============================================ -->
+<section class="section" id="listSection">
     <h2>Lista de Desaparecidos</h2>
-    <button id="btnReload">↻ Recargar lista</button>
-    <div id="listaEstado" class="muted"></div>
-    <table>
+    <button class="button button--secondary u-mb-2" id="btnReload">
+        ↻ Recargar lista
+    </button>
+    <div class="u-text-muted" id="listaEstado"></div>
+    <table class="table">
         <thead>
         <tr>
-            <th>Nombre</th><th>Apellido</th><th>DNI</th>
-            <th>Descripción</th><th>Foto</th><th>Fecha</th>
+            <th class="table__header table__cell">Nombre</th>
+            <th class="table__header table__cell">Apellido</th>
+            <th class="table__header table__cell">DNI</th>
+            <th class="table__header table__cell">Descripción</th>
+            <th class="table__header table__cell">Foto</th>
+            <th class="table__header table__cell">Fecha</th>
         </tr>
         </thead>
         <tbody id="tablaDesaparecidosBody"></tbody>
     </table>
 </section>
 
-<script src="app-auth.js" defer></script>
+<!-- ============================================ -->
+<!-- SECCIÓN: MAPA DE AVISTAMIENTOS -->
+<!-- ============================================ -->
+<section class="section" id="mapaSection">
+    <h2>Mapa de Avistamientos</h2>
+
+    <div class="map__controls">
+        <button class="button button--secondary" id="btnReloadMapa">
+            🔄 Actualizar Mapa
+        </button>
+        <button class="button button--primary" id="btnReportarAvistamiento">
+            📍 Reportar Avistamiento
+        </button>
+    </div>
+
+    <div class="map__status" id="mapaEstado"></div>
+
+    <!-- Contenedor del mapa -->
+    <div class="map" id="map"></div>
+</section>
+
+<!-- ✨ Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<!-- Tu script -->
+<script type="module" src="js/app-auth.js"></script>
+
 </body>
 </html>

@@ -36,4 +36,9 @@ public class ReadAvistamientoUseCase {
             Double lngMin, Double lngMax) {
         return service.obtenerEnAreaEnriquecido(latMin, latMax, lngMin, lngMax);
     }
+
+    public List<AvistamientoFrontDTO> obtenerRecientesEnriquecido(int dias) {
+        return service.obtenerRecientesEnriquecido(dias);
+    }
+
 }

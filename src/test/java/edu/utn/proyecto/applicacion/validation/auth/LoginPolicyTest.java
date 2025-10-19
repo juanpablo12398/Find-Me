@@ -3,19 +3,15 @@ import edu.utn.proyecto.auth.exception.AuthError;
 import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
-import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.RenaperPersonaEntity;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
-import edu.utn.proyecto.domain.model.concreta.Avistador;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,93 +30,83 @@ class LoginPolicyTest {
     }
 
     @Test
-    void happyPath_reglas_ok_renaper_y_usuario_existen_emailCoincide_caseInsensitive() {
-        // DTO YA normalizado por el mapper en el flujo real
+    void happyPath_solo_ejecuta_reglas() {
         var dto = new LoginRequestDTO();
         dto.setDni("12345678");
-        dto.setEmail("USER@mail.com");
+        dto.setEmail("user@mail.com");
 
-        var persona = new RenaperPersonaEntity();
-        persona.setDni("12345678");
-        persona.setNombre("Juan");
-        persona.setApellido("Perez");
-
-        var av = new Avistador(UUID.randomUUID(), "12345678", "Juan", "Perez",
-                30, "Dir", "user@mail.com", null, LocalDateTime.now());
-
-        when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
-        when(repo.findByDni("12345678")).thenReturn(Optional.of(av));
-
-        // no debe lanzar
         policy.validate(dto);
 
-        // reglas ejecutadas
         verify(rule1).check(dto);
         verify(rule2).check(dto);
-
-        // llamadas a repos
-        verify(renaper).findByDni("12345678");
-        verify(repo).findByDni("12345678");
-        verifyNoMoreInteractions(renaper, repo);
+        verifyNoInteractions(renaper, repo);
     }
 
     @Test
-    void lanzaNotFound_siNoExisteEnRenaper() {
+    void propaga_PADRON_NOT_FOUND_si_una_regla_falla() {
         var dto = new LoginRequestDTO();
-        dto.setDni("12345678");
+        dto.setDni("123");
         dto.setEmail("a@a.com");
 
-        when(renaper.findByDni("12345678")).thenReturn(Optional.empty());
+        doThrow(DomainException.of(
+                AuthError.PADRON_NOT_FOUND.key,
+                AuthError.PADRON_NOT_FOUND.status,
+                "no existe"))
+                .when(rule1).check(dto);
 
         assertThatThrownBy(() -> policy.validate(dto))
                 .isInstanceOf(DomainException.class)
                 .extracting(e -> ((DomainException) e).getKey())
                 .isEqualTo(AuthError.PADRON_NOT_FOUND.key);
 
-        verify(renaper).findByDni("12345678");
-        verifyNoInteractions(repo);
+        verify(rule1).check(dto);
+        verify(rule2, never()).check(dto);
+        verifyNoInteractions(renaper, repo);
     }
 
     @Test
-    void lanzaUserNotFound_siNoExisteAvistador() {
+    void propaga_USER_NOT_FOUND_si_una_regla_falla() {
         var dto = new LoginRequestDTO();
-        dto.setDni("12345678");
+        dto.setDni("123");
         dto.setEmail("a@a.com");
 
-        var persona = new RenaperPersonaEntity();
-        persona.setDni("12345678");
-        persona.setNombre("Juan");
-        persona.setApellido("Perez");
-
-        when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
-        when(repo.findByDni("12345678")).thenReturn(Optional.empty());
+        doThrow(DomainException.of(
+                AuthError.USER_NOT_FOUND.key,
+                AuthError.USER_NOT_FOUND.status,
+                "no registrado"))
+                .when(rule1).check(dto);
 
         assertThatThrownBy(() -> policy.validate(dto))
                 .isInstanceOf(DomainException.class)
                 .extracting(e -> ((DomainException) e).getKey())
                 .isEqualTo(AuthError.USER_NOT_FOUND.key);
+
+        verify(rule1).check(dto);
+        verify(rule2, never()).check(dto);
+        verifyNoInteractions(renaper, repo);
     }
 
     @Test
-    void lanzaEmailMismatch_siNoCoincideEmail() {
+    void propaga_EMAIL_MISMATCH_si_una_regla_falla() {
         var dto = new LoginRequestDTO();
-        dto.setDni("12345678");
-        dto.setEmail("otra@a.com");
+        dto.setDni("123");
+        dto.setEmail("x@y.com");
 
-        var persona = new RenaperPersonaEntity();
-        persona.setDni("12345678");
-        persona.setNombre("Juan");
-        persona.setApellido("Perez");
-
-        var av = new Avistador(UUID.randomUUID(), "12345678", "Juan", "Perez",
-                30, "Dir", "user@mail.com", null, LocalDateTime.now());
-
-        when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
-        when(repo.findByDni("12345678")).thenReturn(Optional.of(av));
+        // rule1 ok, falla rule2
+        doNothing().when(rule1).check(dto);
+        doThrow(DomainException.of(
+                AuthError.EMAIL_MISMATCH.key,
+                AuthError.EMAIL_MISMATCH.status,
+                "mismatch"))
+                .when(rule2).check(dto);
 
         assertThatThrownBy(() -> policy.validate(dto))
                 .isInstanceOf(DomainException.class)
                 .extracting(e -> ((DomainException) e).getKey())
                 .isEqualTo(AuthError.EMAIL_MISMATCH.key);
+
+        verify(rule1).check(dto);
+        verify(rule2).check(dto);
+        verifyNoInteractions(renaper, repo);
     }
 }
