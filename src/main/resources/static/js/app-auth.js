@@ -16,11 +16,11 @@ const mapManager = new MapManager();
 async function initApp() {
   console.log('🚀 Inicializando aplicación...');
 
-  // 1. Verificar autenticación
-  await AuthService.checkAuth();
-
-  // 2. Inicializar navegación
+  // 1. Inicializar navegación (suscribe listeners)
   navigation.init();
+
+  // 2. Verificar autenticación (esto actualiza appState y ya hay listeners)
+  await AuthService.checkAuth();
 
   // 3. Inicializar formularios
   initLoginForm();
@@ -127,6 +127,9 @@ function initDesaparecidosForm() {
         resultado.textContent = "❌ Debés iniciar sesión primero.";
         resultado.style.color = "red";
       }
+      navigation.navigateTo('login');
+      const lm = document.getElementById("loginMessage");
+      if (lm) lm.textContent = "Tu sesión no está activa. Iniciá sesión para registrar un desaparecido.";
       return;
     }
 

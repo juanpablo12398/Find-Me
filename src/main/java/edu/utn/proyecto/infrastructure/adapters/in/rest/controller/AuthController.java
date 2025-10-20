@@ -24,13 +24,9 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<SessionUserDTO> doLogin(@RequestBody LoginRequestDTO req,
                                                   HttpServletResponse response) {
-        // Ejecutar el caso de uso (valida y obtiene el usuario)
         SessionUserDTO user = loginUseCase.execute(req);
-
-        // Generar JWT y establecer cookie
         String jwt = tokenService.generate(user.getDni(), user.getEmail(), user.getNombre());
         tokenService.writeCookie(response, jwt);
-
         return ResponseEntity.ok(user);
     }
 
@@ -39,14 +35,8 @@ public class AuthController {
         if (auth == null || !auth.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-
-        // El DNI está en el principal
         String dni = (String) auth.getPrincipal();
-
-        // Aquí podrías buscar más datos del usuario si lo necesitás
-        // Por ahora devuelvo solo el DNI
         SessionUserDTO user = new SessionUserDTO(dni, "", "");
-
         return ResponseEntity.ok(user);
     }
 

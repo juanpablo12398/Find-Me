@@ -150,8 +150,8 @@
         <button class="button button--secondary" id="btnReloadMapa">
             🔄 Actualizar Mapa
         </button>
-        <button class="button button--primary" id="btnReportarAvistamiento">
-            📍 Reportar Avistamiento
+        <button class="button button--primary" id="btnToggleReportar">
+            📍 Activar Modo Reportar
         </button>
     </div>
 
@@ -160,6 +160,61 @@
     <!-- Contenedor del mapa -->
     <div class="map" id="map"></div>
 </section>
+
+<!-- ============================================ -->
+<!-- MODAL: REPORTAR AVISTAMIENTO -->
+<!-- ============================================ -->
+<div class="modal u-hidden" id="modalAvistamiento">
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3 class="modal__title">📍 Reportar Avistamiento</h3>
+            <button class="modal__close" id="btnCloseModal">&times;</button>
+        </div>
+
+        <div class="modal__body">
+            <div class="modal__coords" id="modalCoords">
+                📍 Ubicación: <span id="modalLatLng"></span>
+            </div>
+
+            <form id="formAvistamiento" novalidate>
+                <label class="form__label">
+                    <span class="form__label-text">Persona desaparecida *</span>
+                    <select class="form__input" id="av_desaparecido" required>
+                        <option value="">-- Seleccionar --</option>
+                    </select>
+                </label>
+
+                <label class="form__label">
+                    <span class="form__label-text">Descripción del avistamiento *</span>
+                    <textarea
+                            class="form__textarea"
+                            id="av_descripcion"
+                            placeholder="Ej: Vi a esta persona cerca del parque..."
+                            minlength="20"
+                            required
+                    ></textarea>
+                    <small class="form__hint">Mínimo 20 caracteres</small>
+                </label>
+
+                <label class="form__label">
+                    <span class="form__label-text">Foto (URL, opcional)</span>
+                    <input class="form__input" type="url" id="av_foto" placeholder="https://..." />
+                </label>
+
+                <label class="form__label form__label--checkbox">
+                    <input type="checkbox" id="av_publico" checked />
+                    <span>Hacer público este avistamiento</span>
+                </label>
+
+                <button class="button button--primary" type="submit" id="btnSubmitAvistamiento">
+                    Enviar Avistamiento
+                </button>
+            </form>
+
+            <div class="form__message" id="avistamientoResult"></div>
+        </div>
+    </div>
+</div>
 
 <!-- ✨ Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

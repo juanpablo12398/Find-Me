@@ -35,6 +35,8 @@ export class Navigation {
     this._initNavButtons();
     this._initAuthButtons();
     this._subscribeToAuth();
+    // Pintar estado actual por si ya hay usuario cargado (cookie válida)
+    this._updateUIForAuth(AuthService.getCurrentUser());
   }
 
   /**

@@ -1,8 +1,4 @@
 package edu.utn.proyecto.applicacion.validation.avistador;
-import edu.utn.proyecto.avistador.exception.AvistadorError;
-import edu.utn.proyecto.common.exception.DomainException;
-import edu.utn.proyecto.common.normalize.DniNormalizer;
-import edu.utn.proyecto.common.normalize.TextNormalizer;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.common.validation.abstraccion.Validator;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;

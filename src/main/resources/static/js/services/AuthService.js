@@ -9,14 +9,17 @@ import { parseProblem, getErrorMessage } from '../utils/errors.js';
 export class AuthService {
 
   /**
-   * Verifica si hay una sesión activa
+   * Verifica si hay una sesión activa (cookie JWT)
    * @returns {Promise<boolean>}
    */
   static async checkAuth() {
     try {
       const resp = await fetchWithAuth(`${API_ENDPOINTS.AUTH}/me`);
       if (resp.ok) {
-        appState.currentUser = await resp.json();
+        const user = await resp.json();
+        // IMPORTANTE: Actualizar el estado global para que la UI reaccione
+        appState.currentUser = user;
+        console.log('✅ Sesión activa encontrada:', user);
         return true;
       }
     } catch (error) {
@@ -46,7 +49,9 @@ export class AuthService {
     }
 
     const user = await resp.json();
+    // Actualizar estado global
     appState.currentUser = user;
+    console.log('✅ Login exitoso:', user);
     return user;
   }
 
@@ -56,6 +61,7 @@ export class AuthService {
   static async logout() {
     try {
       await fetchWithAuth(`${API_ENDPOINTS.AUTH}/logout`, { method: "POST" });
+      console.log('✅ Logout exitoso');
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -68,5 +74,13 @@ export class AuthService {
    */
   static getCurrentUser() {
     return appState.currentUser;
+  }
+
+  /**
+   * Verifica si el usuario está autenticado
+   * @returns {boolean}
+   */
+  static isAuthenticated() {
+    return appState.currentUser !== null;
   }
 }

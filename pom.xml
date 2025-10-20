@@ -86,8 +86,9 @@
 	<!-- ======= FIN DEPENDENCIAS ======= -->
 
 	<build>
-		<!-- Filtering ACTIVADO para resources (solo .properties / .yml) -->
+		<!-- Resources -->
 		<resources>
+			<!-- 1) Solo properties/yml con filtering -->
 			<resource>
 				<directory>src/main/resources</directory>
 				<filtering>true</filtering>
@@ -95,21 +96,31 @@
 					<include>**/*.properties</include>
 					<include>**/*.yml</include>
 				</includes>
+				<!-- No filtremos los estáticos -->
+				<excludes>
+					<exclude>static/**</exclude>
+					<exclude>public/**</exclude>
+					<exclude>templates/**</exclude>
+				</excludes>
 			</resource>
-			<!-- (Opcional) otro bloque para binarios sin filtering -->
-			<!--
-            <resource>
-              <directory>src/main/resources</directory>
-              <filtering>false</filtering>
-              <includes>
-                <include>**/*.*</include>
-              </includes>
-              <excludes>
-                <exclude>**/*.properties</exclude>
-                <exclude>**/*.yml</exclude>
-              </excludes>
-            </resource>
-            -->
+
+			<!-- 2) Estático sin filtering -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>false</filtering>
+				<includes>
+					<include>static/**</include>
+					<include>public/**</include>
+					<include>templates/**</include>
+					<!-- por si tienes assets sueltos -->
+					<include>**/*.html</include>
+					<include>**/*.css</include>
+					<include>**/*.js</include>
+					<include>**/*.png</include>
+					<include>**/*.jpg</include>
+					<include>**/*.svg</include>
+				</includes>
+			</resource>
 		</resources>
 
 		<!-- (Opcional) testResources sin filtering -->
@@ -121,7 +132,7 @@
 		</testResources>
 
 		<plugins>
-			<!-- Ejecutable Spring Boot -->
+			<!-- Spring Boot -->
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
