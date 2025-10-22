@@ -1,14 +1,13 @@
 package edu.utn.proyecto.infrastructure.adapters.in.rest.dtos;
 import jakarta.validation.constraints.*;
-import java.util.UUID;
 
 public class AvistamientoRequestDTO {
 
-    @NotNull(message = "El ID del avistador es obligatorio")
-    private UUID avistadorId;
+    @NotBlank(message = "El ID del avistador es obligatorio")
+    private String avistadorId;
 
-    @NotNull(message = "El ID del desaparecido es obligatorio")
-    private UUID desaparecidoId;
+    @NotBlank(message = "El ID del desaparecido es obligatorio")
+    private String desaparecidoId;
 
     @NotNull(message = "La latitud es obligatoria")
     private Double latitud;
@@ -26,21 +25,12 @@ public class AvistamientoRequestDTO {
     // Constructor vacío
     public AvistamientoRequestDTO() {}
 
-    // Getters y Setters
-    public UUID getAvistadorId() {
+    public String getAvistadorId() {
         return avistadorId;
     }
 
-    public void setAvistadorId(UUID avistadorId) {
-        this.avistadorId = avistadorId;
-    }
-
-    public UUID getDesaparecidoId() {
+    public String getDesaparecidoId() {
         return desaparecidoId;
-    }
-
-    public void setDesaparecidoId(UUID desaparecidoId) {
-        this.desaparecidoId = desaparecidoId;
     }
 
     public Double getLatitud() {
@@ -81,5 +71,13 @@ public class AvistamientoRequestDTO {
 
     public void setPublico(Boolean publico) {
         this.publico = publico;
+    }
+
+    public void setAvistadorId(String avistadorId) {
+        this.avistadorId = avistadorId;
+    }
+
+    public void setDesaparecidoId(String desaparecidoId) {
+        this.desaparecidoId = desaparecidoId;
     }
 }

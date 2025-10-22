@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -29,18 +30,18 @@ class TokenServiceTest {
     }
 
     @Test
-    void generate_incluyeClaims_yExpiraEn7Dias_yFirmaConSecret() {
+    void generate_incluyeClaims_idEmailNombre_yExpiraEn7Dias_yFirmaConSecret() {
         String dni = "12345678";
         String email = "user@mail.com";
         String nombre = "Juan Pérez";
+        String avistadorId = UUID.randomUUID().toString();
 
         Instant t0 = Instant.now();
-        String jwt = service.generate(dni, email, nombre);
+        String jwt = service.generate(avistadorId, dni, email, nombre);
         Instant t1 = Instant.now();
 
         var key = Keys.hmacShaKeyFor(SECRET_OK.getBytes(StandardCharsets.UTF_8));
 
-        // ✅ Parser para jjwt 0.12+
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(key)
                 .build()
@@ -49,6 +50,7 @@ class TokenServiceTest {
 
         // subject y claims
         assertThat(claims.getSubject()).isEqualTo(dni);
+        assertThat(claims.get("id", String.class)).isEqualTo(avistadorId);
         assertThat(claims.get("email", String.class)).isEqualTo(email);
         assertThat(claims.get("name", String.class)).isEqualTo(nombre);
 
@@ -58,14 +60,10 @@ class TokenServiceTest {
         assertThat(iat).isNotNull();
         assertThat(exp).isNotNull();
 
-        // un poquito de tolerancia por relojes/precisión
         assertThat(iat.toInstant())
                 .isBetween(t0.minusSeconds(1), t1.plusSeconds(1));
 
-        var sevenDays = Duration.ofDays(7);
-        Instant esperado = iat.toInstant().plus(sevenDays);
-
-        // tolerancia 5s
+        Instant esperado = iat.toInstant().plus(Duration.ofDays(7));
         assertThat(exp.toInstant()).isCloseTo(esperado, within(5, ChronoUnit.SECONDS));
     }
 
@@ -116,7 +114,11 @@ class TokenServiceTest {
     void generate_conSecretDemasiadoCorto_lanzaWeakKeyException() {
         ReflectionTestUtils.setField(service, "SECRET", SECRET_SHORT);
 
-        assertThatThrownBy(() -> service.generate("1", "a@a.com", "x"))
-                .isInstanceOf(WeakKeyException.class); // ✅ en 0.11.x también es WeakKeyException
+        assertThatThrownBy(() -> service.generate(
+                UUID.randomUUID().toString(),
+                "1",
+                "a@a.com",
+                "x"
+        )).isInstanceOf(WeakKeyException.class);
     }
 }

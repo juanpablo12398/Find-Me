@@ -32,11 +32,10 @@ public class AuthService {
     public SessionUserDTO login(LoginRequestDTO dto) {
         mapper.normalizeRequestInPlace(dto);
         loginPolicy.validate(dto);
-        // Ya se que existe por que policy lo valido
         var avistador = repoAvistadores.findByDni(dto.getDni()).orElseThrow();
         String resolvedNombre = (avistador.getNombre() != null && !avistador.getNombre().isBlank())
                 ? avistador.getNombre()
                 : renaper.findByDni(dto.getDni()).map(RenaperPersonaEntity::getNombre).orElse(null);
-        return mapper.fromLoginRequestToSession(dto,resolvedNombre);
+        return mapper.fromLoginRequestToSession(dto,avistador.getId(),resolvedNombre);
     }
 }

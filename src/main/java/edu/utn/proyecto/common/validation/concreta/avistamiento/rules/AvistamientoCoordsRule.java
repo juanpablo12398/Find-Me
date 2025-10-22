@@ -3,9 +3,11 @@ import edu.utn.proyecto.avistamiento.exception.AvistamientoError;
 import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoRequestDTO;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(1)
 public class AvistamientoCoordsRule implements Rule<AvistamientoRequestDTO> {
 
     @Override

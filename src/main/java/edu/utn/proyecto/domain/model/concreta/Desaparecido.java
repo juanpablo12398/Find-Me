@@ -14,7 +14,6 @@ public class Desaparecido implements IDesaparecido {
     private String foto;
 
     public Desaparecido(String nombre, String apellido, String dni, String descripcion, String foto) {
-        this.id = UUID.randomUUID(); // Genera un ID único para cada desaparecido
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
@@ -23,7 +22,6 @@ public class Desaparecido implements IDesaparecido {
         this.foto = foto;
     }
 
-    // Getters and Setters
     public String getNombre() {
         return nombre;
     }

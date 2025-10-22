@@ -17,7 +17,7 @@ export class AuthService {
       const resp = await fetchWithAuth(`${API_ENDPOINTS.AUTH}/me`);
       if (resp.ok) {
         const user = await resp.json();
-        // IMPORTANTE: Actualizar el estado global para que la UI reaccione
+        user.id = String(user.id);
         appState.currentUser = user;
         console.log('✅ Sesión activa encontrada:', user);
         return true;
@@ -49,7 +49,7 @@ export class AuthService {
     }
 
     const user = await resp.json();
-    // Actualizar estado global
+    user.id = String(user.id);
     appState.currentUser = user;
     console.log('✅ Login exitoso:', user);
     return user;

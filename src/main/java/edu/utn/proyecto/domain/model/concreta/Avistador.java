@@ -30,7 +30,6 @@ public class Avistador {
         this.creadoEn = creadoEn;
     }
 
-    // Getters/Setters
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getDni() { return dni; }

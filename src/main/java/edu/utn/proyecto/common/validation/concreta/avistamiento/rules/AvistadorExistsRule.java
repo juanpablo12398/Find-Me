@@ -4,9 +4,12 @@ import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import java.util.UUID;
 
 @Component
+@Order(3)
 public class AvistadorExistsRule implements Rule<AvistamientoRequestDTO> {
 
     private final IRepoDeAvistadores repo;
@@ -18,7 +21,7 @@ public class AvistadorExistsRule implements Rule<AvistamientoRequestDTO> {
     @Override
     public void check(AvistamientoRequestDTO dto) {
         if (dto.getAvistadorId() == null ||
-                !repo.findById(dto.getAvistadorId()).isPresent()) {
+                !repo.findById(UUID.fromString(dto.getAvistadorId())).isPresent()) {
             throw DomainException.of(
                     AvistamientoError.AVISTADOR_NOT_FOUND.key,
                     AvistamientoError.AVISTADOR_NOT_FOUND.status,

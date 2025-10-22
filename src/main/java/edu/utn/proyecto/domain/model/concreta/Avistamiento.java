@@ -20,17 +20,14 @@ public class Avistamiento {
     private LocalDateTime creadoEn;
 
     public Avistamiento() {
-        this.id = UUID.randomUUID();
         this.fechaHora = LocalDateTime.now();
         this.creadoEn = LocalDateTime.now();
         this.verificado = false;
         this.publico = true;
     }
 
-    // Constructor con datos mínimos
     public Avistamiento(UUID avistadorId, UUID desaparecidoId,
                         Double latitud, Double longitud, String descripcion) {
-        this();
         this.avistadorId = avistadorId;
         this.desaparecidoId = desaparecidoId;
         this.latitud = latitud;

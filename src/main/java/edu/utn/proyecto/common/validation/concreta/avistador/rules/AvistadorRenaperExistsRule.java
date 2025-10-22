@@ -4,9 +4,11 @@ import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(2)
 public class AvistadorRenaperExistsRule implements Rule<AvistadorRequestDTO> {
 
     private final IRepoDeRenaper renaper;

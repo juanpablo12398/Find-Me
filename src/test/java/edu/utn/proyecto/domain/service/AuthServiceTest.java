@@ -22,7 +22,7 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Mock LoginPolicy policy;        // implements Validator<LoginRequestDTO>
+    @Mock LoginPolicy policy;
     @Mock LoginMapper mapper;
     @Mock IRepoDeRenaper renaper;
     @Mock IRepoDeAvistadores repoAvistadores;
@@ -35,24 +35,25 @@ class AuthServiceTest {
         req.setDni("12345678");
         req.setEmail("a@a.com");
 
-        var av = new Avistador(UUID.randomUUID(), "12345678", "Juan", "Perez",
+        UUID avistadorId = UUID.randomUUID();
+        var av = new Avistador(avistadorId, "12345678", "Juan", "Perez",
                 30, "Dir", "a@a.com", null, LocalDateTime.now());
         when(repoAvistadores.findByDni("12345678")).thenReturn(Optional.of(av));
 
-        var expected = new SessionUserDTO("12345678", "a@a.com", "Juan");
-        when(mapper.fromLoginRequestToSession(req, "Juan")).thenReturn(expected);
+        // ⭐ CAMBIO: Ahora incluye el ID como primer parámetro
+        var expected = new SessionUserDTO(avistadorId, "12345678", "a@a.com", "Juan");
+        when(mapper.fromLoginRequestToSession(req, avistadorId, "Juan")).thenReturn(expected);
 
         var out = service.login(req);
 
-        // Orden esperado: normalize → validate → repoAvistadores → mapper
+        // Orden esperado
         InOrder io = inOrder(mapper, policy, repoAvistadores);
         io.verify(mapper).normalizeRequestInPlace(req);
         io.verify(policy).validate(req);
         io.verify(repoAvistadores).findByDni("12345678");
-        io.verify(mapper).fromLoginRequestToSession(req, "Juan");
+        io.verify(mapper).fromLoginRequestToSession(req, avistadorId, "Juan"); // ⭐ Con ID
         io.verifyNoMoreInteractions();
 
-        // No debió consultarse RENAPER porque el avistador ya tenía nombre
         verifyNoInteractions(renaper);
 
         assertThat(out).isSameAs(expected);
@@ -75,11 +76,10 @@ class AuthServiceTest {
                     assertThat(de.getStatus()).isEqualTo(AuthError.PADRON_NOT_FOUND.status);
                 });
 
-        // Se llamó a normalize primero; luego validate lanzó
         verify(mapper).normalizeRequestInPlace(req);
         verify(policy).validate(req);
         verifyNoInteractions(repoAvistadores, renaper);
-        verify(mapper, never()).fromLoginRequestToSession(any(), any());
+        verify(mapper, never()).fromLoginRequestToSession(any(), any(), any()); // ⭐ 3 parámetros
     }
 
     @Test
@@ -90,8 +90,9 @@ class AuthServiceTest {
         req.setDni("12345678");
         req.setEmail("a@a.com");
 
+        UUID avistadorId = UUID.randomUUID();
         // Avistador sin nombre
-        var av = new Avistador(UUID.randomUUID(), "12345678", "", "",
+        var av = new Avistador(avistadorId, "12345678", "", "",
                 30, "Dir", "a@a.com", null, LocalDateTime.now());
         when(repoAvistadores.findByDni("12345678")).thenReturn(Optional.of(av));
 
@@ -101,8 +102,9 @@ class AuthServiceTest {
         persona.setNombre("NombreRENAPER");
         when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
 
-        var expected = new SessionUserDTO("12345678", "a@a.com", "NombreRENAPER");
-        when(mapper.fromLoginRequestToSession(req, "NombreRENAPER")).thenReturn(expected);
+        // ⭐ CAMBIO: Incluir ID
+        var expected = new SessionUserDTO(avistadorId, "12345678", "a@a.com", "NombreRENAPER");
+        when(mapper.fromLoginRequestToSession(req, avistadorId, "NombreRENAPER")).thenReturn(expected);
 
         var out = service.login(req);
         assertThat(out.getNombre()).isEqualTo("NombreRENAPER");
@@ -112,6 +114,6 @@ class AuthServiceTest {
         io.verify(policy).validate(req);
         io.verify(repoAvistadores).findByDni("12345678");
         io.verify(renaper).findByDni("12345678");
-        io.verify(mapper).fromLoginRequestToSession(req, "NombreRENAPER");
+        io.verify(mapper).fromLoginRequestToSession(req, avistadorId, "NombreRENAPER"); // ⭐ Con ID
     }
 }

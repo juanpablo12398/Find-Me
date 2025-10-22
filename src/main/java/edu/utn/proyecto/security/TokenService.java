@@ -17,12 +17,13 @@ public class TokenService {
     @Value("${jwt.secret:CAMBIA_ESTE_SECRETO_LARGO_DEMO_32+_CHARS}")
     private String SECRET;
 
-    public String generate(String dni, String email, String nombre) {
+    public String generate(String avistadorId, String dni, String email, String nombre) {
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(7 * 24 * 3600); // 7 días
 
         return Jwts.builder()
                 .setSubject(dni)
+                .claim("id", avistadorId)
                 .claim("email", email)
                 .claim("name", nombre)
                 .setIssuedAt(Date.from(now))

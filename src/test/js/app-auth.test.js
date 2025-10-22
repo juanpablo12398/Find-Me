@@ -8,7 +8,12 @@ const appStateMock = vi.hoisted(() => ({ map: null, markersLayer: null }))
 
 // capturamos las instancias para aserciones
 const navInstance = vi.hoisted(() => ({ init: vi.fn(), navigateTo: vi.fn() }))
-const mapInstance = vi.hoisted(() => ({ init: vi.fn(), loadAvistamientos: vi.fn() }))
+const mapInstance = vi.hoisted(() => ({
+  init: vi.fn(),
+  loadAvistamientos: vi.fn(),
+  closeModal: vi.fn(),
+  submitAvistamiento: vi.fn()
+}))
 
 // Navigation y MapManager como clases mockeadas
 vi.mock('@app/ui/Navigation.js', () => {
@@ -92,7 +97,8 @@ function baseDOM () {
     <div id="map"></div>
     <div id="mapaEstado"></div>
     <button id="btnReloadMapa"></button>
-    <button id="btnReportarAvistamiento"></button>
+    <button id="btnCloseModal"></button>
+    <div id="modalAvistamiento"></div>
 
     <!-- lista -->
     <button id="btnReload"></button>
@@ -132,6 +138,18 @@ function baseDOM () {
       <button id="btnAvistador" type="submit"></button>
       <div id="outAvistador"></div>
     </form>
+
+    <!-- form avistamiento (modal) -->
+    <form id="formAvistamiento">
+      <select id="av_desaparecido">
+        <option value="">-- Seleccionar --</option>
+      </select>
+      <textarea id="av_descripcion">Descripción del avistamiento</textarea>
+      <input id="av_foto" value="" />
+      <input id="av_publico" type="checkbox" checked />
+      <button id="btnSubmitAvistamiento" type="submit"></button>
+      <div id="avistamientoResult"></div>
+    </form>
   `
 }
 
@@ -158,6 +176,8 @@ beforeEach(() => {
   navInstance.navigateTo.mockClear()
   mapInstance.init.mockClear()
   mapInstance.loadAvistamientos.mockClear()
+  mapInstance.closeModal.mockClear()
+  mapInstance.submitAvistamiento.mockClear()
   alertSpy.mockClear()
   consoleErrorSpy.mockClear()
   consoleLogSpy.mockClear()
@@ -168,13 +188,11 @@ afterEach(() => {
 })
 
 // ---------- IMPORT del SUT ----------
-// lo importamos una vez; cada test resetea el DOM y mocks
 import '@app/app-auth.js'
 
 // helper: disparamos DOMContentLoaded para que corra initApp()
 async function fireDOMContentLoaded() {
   document.dispatchEvent(new Event('DOMContentLoaded'))
-  // initApp hace await checkAuth, etc. damos un tick
   await Promise.resolve()
 }
 
@@ -208,26 +226,24 @@ describe('app-auth bootstrap & wiring', () => {
     expect(mapInstance.loadAvistamientos).toHaveBeenCalledTimes(3)
   })
 
-  it('btnReportarAvistamiento: sin sesión -> alerta y navega a login', async () => {
+  it('btnCloseModal: llama a mapManager.closeModal()', async () => {
     await fireDOMContentLoaded()
-    getCurrentUserMock.mockReturnValue(null)
 
-    document.getElementById('btnReportarAvistamiento').click()
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/Debés iniciar sesión/i))
-    expect(navInstance.navigateTo).toHaveBeenCalledWith('login')
+    document.getElementById('btnCloseModal').click()
+    expect(mapInstance.closeModal).toHaveBeenCalledTimes(1)
   })
 
-  it('btnReportarAvistamiento: con sesión -> solo alerta "próximamente"', async () => {
+  it('modal click fuera (en el fondo): llama a closeModal', async () => {
     await fireDOMContentLoaded()
-    getCurrentUserMock.mockReturnValue({ id: 1 })
 
-    document.getElementById('btnReportarAvistamiento').click()
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/próximamente/i))
-    expect(navInstance.navigateTo).not.toHaveBeenCalledWith('login')
+    const modal = document.getElementById('modalAvistamiento')
+    // Simular click en el modal mismo (no en contenido interno)
+    modal.onclick({ target: modal })
+
+    expect(mapInstance.closeModal).toHaveBeenCalledTimes(1)
   })
 
   it('initApp: sin formularios ni botones no rompe y loguea inicio/fin', async () => {
-    // DOM mínimo: solo secciones (sin forms ni botones)
     document.body.innerHTML = `
       <section id="loginSection"></section>
       <section id="avistadorSection"></section>
@@ -237,7 +253,6 @@ describe('app-auth bootstrap & wiring', () => {
       <div id="listaEstado"></div>
       <table><tbody id="tablaDesaparecidosBody"></tbody></table>
     `
-    // reiniciar contadores
     navInstance.init.mockClear()
     mapInstance.init.mockClear()
     mapInstance.loadAvistamientos.mockClear()
@@ -245,15 +260,12 @@ describe('app-auth bootstrap & wiring', () => {
 
     await fireDOMContentLoaded()
 
-    // listeners existen igual
     window.dispatchEvent(new Event('loadMapa'))
     window.dispatchEvent(new Event('loadList'))
     await Promise.resolve()
 
     expect(checkAuthMock).toHaveBeenCalled()
     expect(navInstance.init).toHaveBeenCalled()
-
-    // sin btnReloadMapa/btnReportarAvistamiento/btnReload -> solo validamos que no truene
     expect(consoleLogSpy).toHaveBeenCalledWith('🚀 Inicializando aplicación...')
     expect(consoleLogSpy).toHaveBeenCalledWith('✅ Aplicación inicializada')
   })
@@ -268,22 +280,16 @@ describe('Login form', () => {
 
     const resetSpy = vi.spyOn(form, 'reset')
 
-    // submit
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 
-    // El handler ya puso "Iniciando…" y deshabilitó el botón SIN await
     expect(result.textContent).toMatch(/Iniciando sesión…/)
     expect(btn.disabled).toBe(true)
 
-    // ahora dejamos resolver el login (promesa)
     await Promise.resolve()
 
     expect(loginMock).toHaveBeenCalledWith('111', 'a@a.com')
-
-    // tras resolver login, marca OK y programa timeout
     expect(result.textContent).toMatch(/Sesión iniciada/)
 
-    // corre el setTimeout(400)
     vi.advanceTimersByTime(400)
 
     expect(navInstance.navigateTo).toHaveBeenCalledWith('form')
@@ -307,16 +313,19 @@ describe('Login form', () => {
 })
 
 describe('Form Desaparecido', () => {
-  it('sin sesión: muestra aviso y no llama servicio', async () => {
+  it('sin sesión: muestra aviso, navega a login y actualiza loginMessage', async () => {
     await fireDOMContentLoaded()
     getCurrentUserMock.mockReturnValue(null)
     const result = document.getElementById('resultado')
+    const loginMsg = document.getElementById('loginMessage')
     const form = setFormValidity('formDesaparecido', true)
 
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
     await Promise.resolve()
 
     expect(result.textContent).toMatch(/Debés iniciar sesión/)
+    expect(navInstance.navigateTo).toHaveBeenCalledWith('login')
+    expect(loginMsg.textContent).toMatch(/Tu sesión no está activa/)
     expect(crearDesapMock).not.toHaveBeenCalled()
   })
 
@@ -352,11 +361,9 @@ describe('Form Desaparecido', () => {
     expect(result.textContent).toMatch(/Persona registrada/)
     expect(resetSpy).toHaveBeenCalled()
 
-    // setTimeout(800) para navegar y cargar lista
     vi.advanceTimersByTime(800)
     expect(navInstance.navigateTo).toHaveBeenCalledWith('list')
 
-    // loadList => obtenerTodos + render
     await Promise.resolve()
     const rows = document.querySelectorAll('#tablaDesaparecidosBody tr')
     expect(rows.length).toBe(1)
@@ -397,7 +404,6 @@ describe('Form Avistador', () => {
 
     form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 
-    // ⬇️ drenar las DOS microtareas: crear() y checkAuth()
     await Promise.resolve()
     await Promise.resolve()
 
@@ -407,7 +413,6 @@ describe('Form Avistador', () => {
     expect(resetSpy).toHaveBeenCalled()
     expect(checkAuthMock).toHaveBeenCalled()
 
-    // ⬇️ ahora sí, corre el timeout y luego microtareas del callback
     vi.advanceTimersByTime(600)
     await Promise.resolve()
 
@@ -428,17 +433,51 @@ describe('Form Avistador', () => {
   })
 })
 
+describe('Form Avistamiento (modal)', () => {
+  it('sin desaparecido seleccionado: muestra error', async () => {
+    await fireDOMContentLoaded()
+    const form = document.getElementById('formAvistamiento')
+    const result = document.getElementById('avistamientoResult')
+
+    // No seleccionar ningún desaparecido
+    document.getElementById('av_desaparecido').value = ''
+
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    await Promise.resolve()
+
+    expect(result.textContent).toMatch(/Debes seleccionar una persona desaparecida/)
+    expect(mapInstance.submitAvistamiento).not.toHaveBeenCalled()
+  })
+
+  it('con desaparecido seleccionado: llama a mapManager.submitAvistamiento', async () => {
+    await fireDOMContentLoaded()
+    const form = document.getElementById('formAvistamiento')
+    const select = document.getElementById('av_desaparecido')
+
+    // Agregar una opción y seleccionarla
+    select.innerHTML = '<option value="uuid-123">Juan Pérez (DNI: 12345678)</option>'
+    select.value = 'uuid-123'
+
+    form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+    await Promise.resolve()
+
+    expect(mapInstance.submitAvistamiento).toHaveBeenCalledWith(expect.objectContaining({
+      desaparecidoId: 'uuid-123',
+      descripcion: 'Descripción del avistamiento',
+      publico: true
+    }))
+  })
+})
+
 describe('loadList + renderTable', () => {
   it('éxito: limpia estado, renderiza filas y deja estado vacío', async () => {
     await fireDOMContentLoaded()
-    // 👇 usar mockResolvedValue (no Once) por posible múltiple listener
     obtenerTodosMock.mockResolvedValue([
       { nombre: 'N1', apellido: 'A1', dni: '1', descripcion: 'd1', foto: 'f1', fechaFormateada: 'hoy' },
       { nombre: 'N2', apellido: 'A2', dni: '2', descripcion: 'd2', foto: 'f2', fechaFormateada: 'ayer' },
     ])
 
     window.dispatchEvent(new Event('loadList'))
-    // puede haber varios handlers
     await Promise.resolve()
     await Promise.resolve()
 
@@ -450,7 +489,6 @@ describe('loadList + renderTable', () => {
 
   it('error: captura y muestra texto de error', async () => {
     await fireDOMContentLoaded()
-    // 👇 todas las llamadas de posibles listeners fallan igual
     obtenerTodosMock.mockRejectedValue(new Error('down'))
 
     window.dispatchEvent(new Event('loadList'))
@@ -465,15 +503,11 @@ describe('loadList + renderTable', () => {
   it('btnReload: hace click y ejecuta loadList (obtenerTodos + render)', async () => {
     await fireDOMContentLoaded()
 
-    // preparamos datos para que renderice algo
     obtenerTodosMock.mockResolvedValueOnce([
       { nombre: 'Z', apellido: 'X', dni: '9', descripcion: 'd', foto: 'f', fechaFormateada: 'hoy' },
     ])
 
-    // click en el botón que el bootstrap le asigna loadList
     document.getElementById('btnReload').click()
-
-    // drenar microtareas del fetch simulado
     await Promise.resolve()
 
     expect(obtenerTodosMock).toHaveBeenCalled()
@@ -495,7 +529,6 @@ describe('loadList + renderTable', () => {
   it('renderTable con campos nulos/undefined usa fallback vacío', async () => {
     await fireDOMContentLoaded()
 
-    // Devolvemos un único registro con null/undefined en todos los campos
     obtenerTodosMock.mockResolvedValueOnce([
       {
         nombre: null,
@@ -507,33 +540,24 @@ describe('loadList + renderTable', () => {
       },
     ])
 
-    // En lugar del evento custom (que dispara TODOS los listeners acumulados),
-    // clickeamos el botón que tiene un único onclick=loadList
     document.getElementById('btnReload').click()
-
-    // Drenar la promesa del servicio
     await Promise.resolve()
 
-    // Debe haberse renderizado exactamente una fila
     const rows = document.querySelectorAll('#tablaDesaparecidosBody tr')
     expect(rows.length).toBe(1)
 
-    // 6 celdas en la fila (incluye la del <img>)
     const tds = rows[0].querySelectorAll('td')
     expect(tds.length).toBe(6)
 
-    // Texto de celdas (excepto la de la imagen) vacío por el "?? ''"
-    expect(tds[0].textContent.trim()).toBe('') // nombre
-    expect(tds[1].textContent.trim()).toBe('') // apellido
-    expect(tds[2].textContent.trim()).toBe('') // dni
-    expect(tds[3].textContent.trim()).toBe('') // descripcion
-    expect(tds[5].textContent.trim()).toBe('') // fechaFormateada
+    expect(tds[0].textContent.trim()).toBe('')
+    expect(tds[1].textContent.trim()).toBe('')
+    expect(tds[2].textContent.trim()).toBe('')
+    expect(tds[3].textContent.trim()).toBe('')
+    expect(tds[5].textContent.trim()).toBe('')
 
-    // Celda de la imagen: <img src=""> y texto vacío
     const img = tds[4].querySelector('img')
     expect(img).toBeTruthy()
     expect(img.getAttribute('src')).toBe('')
     expect(tds[4].textContent.trim()).toBe('')
   })
-
 })

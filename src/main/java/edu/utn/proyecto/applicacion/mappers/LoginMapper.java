@@ -4,6 +4,7 @@ import edu.utn.proyecto.common.normalize.TextNormalizer;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.SessionUserDTO;
 import org.springframework.stereotype.Component;
+import java.util.UUID;
 
 @Component
 public class LoginMapper {
@@ -22,8 +23,9 @@ public class LoginMapper {
         dto.setEmail(dto.getEmail() == null ? "" : txtNorm.normalize(dto.getEmail()));
     }
 
-    public SessionUserDTO fromLoginRequestToSession(LoginRequestDTO dto,String resolvedNombre) {
+    public SessionUserDTO fromLoginRequestToSession(LoginRequestDTO dto, UUID avistadorId, String resolvedNombre) {
         return new SessionUserDTO(
+                avistadorId,
                 dto.getDni(),
                 dto.getEmail(),
                 resolvedNombre

@@ -115,6 +115,4 @@ public class AvistadorEntity {
     public void setCreadoEn(LocalDateTime creadoEn) {
         this.creadoEn = creadoEn;
     }
-
-    // getters/setters
 }

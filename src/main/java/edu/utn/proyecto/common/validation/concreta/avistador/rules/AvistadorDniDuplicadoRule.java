@@ -4,9 +4,11 @@ import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(4)
 public class AvistadorDniDuplicadoRule implements Rule<AvistadorRequestDTO> {
 
     private final IRepoDeAvistadores repo;

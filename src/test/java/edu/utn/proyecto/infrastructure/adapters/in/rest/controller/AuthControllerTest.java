@@ -14,6 +14,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
+import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -33,11 +34,7 @@ class AuthControllerTest {
     @Autowired ObjectMapper om;
 
     @org.springframework.boot.test.mock.mockito.MockBean LoginUseCase loginUseCase;
-
-    // 👇 SpyBean: el método real writeCookie(...) se ejecuta
     @SpyBean TokenService tokenService;
-
-    // ✅ mock para el handler de excepciones
     @org.springframework.boot.test.mock.mockito.MockBean MessageSource messageSource;
 
     @Test
@@ -46,37 +43,41 @@ class AuthControllerTest {
         req.setDni("12345678");
         req.setEmail("user@mail.com");
 
-        var session = new SessionUserDTO("12345678", "user@mail.com", "Juan");
+        UUID avistadorId = UUID.randomUUID();
+        // ⭐ CAMBIO: Ahora SessionUserDTO incluye el ID
+        var session = new SessionUserDTO(avistadorId, "12345678", "user@mail.com", "Juan");
         given(loginUseCase.execute(any(LoginRequestDTO.class))).willReturn(session);
 
-        // Stub del generate en el SPY (para no depender del SECRET real)
+        // ⭐ CAMBIO: generate ahora recibe 4 parámetros
         doReturn("JWT.TOKEN.X")
-                .when(tokenService).generate(eq("12345678"), eq("user@mail.com"), eq("Juan"));
+                .when(tokenService).generate(
+                        eq(avistadorId.toString()),
+                        eq("12345678"),
+                        eq("user@mail.com"),
+                        eq("Juan")
+                );
 
         var res = mvc.perform(post("/api/auth/login")
                         .contentType("application/json")
                         .content(om.writeValueAsString(req)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(avistadorId.toString())) // ⭐ Verificar ID
                 .andExpect(jsonPath("$.dni").value("12345678"))
                 .andExpect(jsonPath("$.email").value("user@mail.com"))
                 .andExpect(jsonPath("$.nombre").value("Juan"))
                 .andReturn();
 
         verify(loginUseCase).execute(any(LoginRequestDTO.class));
-        verify(tokenService).generate("12345678", "user@mail.com", "Juan");
+        verify(tokenService).generate(avistadorId.toString(), "12345678", "user@mail.com", "Juan");
         verify(tokenService).writeCookie(any(), eq("JWT.TOKEN.X"));
 
         var setCookies = res.getResponse().getHeaders("Set-Cookie");
         assertThat(setCookies).isNotEmpty();
-
-        // Valida que alguna Set-Cookie sea la nuestra y con flags básicos esperados
         assertThat(setCookies).anySatisfy(c -> {
             assertThat(c).contains("FM_TOKEN=");
             assertThat(c).contains("HttpOnly");
             assertThat(c).contains("Path=/");
-            assertThat(c).contains("Max-Age=604800"); // 7 días
-            // Si tu MockHttpServletResponse serializa SameSite, también podés afirmar:
-            // assertThat(c).contains("SameSite=Lax");
+            assertThat(c).contains("Max-Age=604800");
         });
     }
 
@@ -109,6 +110,6 @@ class AuthControllerTest {
     void logout_clears_cookie_204() throws Exception {
         mvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isNoContent());
-        verify(tokenService).clearCookie(any()); // funciona con SpyBean
+        verify(tokenService).clearCookie(any());
     }
 }

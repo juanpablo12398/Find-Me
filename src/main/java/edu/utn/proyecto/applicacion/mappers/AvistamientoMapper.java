@@ -8,6 +8,7 @@ import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoFrontDT
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoRequestDTO;
 import org.springframework.stereotype.Component;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Component
@@ -45,8 +46,8 @@ public class AvistamientoMapper {
 
     public Avistamiento fromRequestToDomain(AvistamientoRequestDTO dto) {
         Avistamiento a = new Avistamiento();
-        a.setAvistadorId(dto.getAvistadorId());
-        a.setDesaparecidoId(dto.getDesaparecidoId());
+        a.setAvistadorId(UUID.fromString(dto.getAvistadorId()));
+        a.setDesaparecidoId(UUID.fromString(dto.getDesaparecidoId()));
         a.setLatitud(dto.getLatitud());
         a.setLongitud(dto.getLongitud());
         a.setDescripcion(dto.getDescripcion());

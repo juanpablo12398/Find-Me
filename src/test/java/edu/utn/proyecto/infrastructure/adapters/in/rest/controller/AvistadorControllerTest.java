@@ -37,19 +37,12 @@ class AvistadorControllerTest {
     @Autowired ObjectMapper om;
 
     @MockBean CreateAvistadorUseCase createAvistadorUseCase;
-
-    // 👇 Spy para que writeCookie(...) real agregue la cookie
     @SpyBean TokenService tokenService;
-
-    // ✅ mock para el handler
     @MockBean MessageSource messageSource;
-
-    // 👇 Desactivamos Bean Validation para estos tests (queremos probar el flujo del controller)
     @MockBean Validator beanValidator;
 
     @BeforeEach
     void disableBeanValidation() {
-        // Devuelve "sin violaciones" ante cualquier request
         when(beanValidator.validate(any(), (Class<?>[]) any()))
                 .thenReturn(Collections.emptySet());
     }
@@ -61,7 +54,7 @@ class AvistadorControllerTest {
         req.setNombre("ANA");
         req.setApellido("PEREZ");
         req.setEdad(28);
-        req.setEmail("a@a.com"); // si tu DTO lo trae, no estorba
+        req.setEmail("a@a.com");
 
         var id = UUID.randomUUID();
         var resp = new AvistadorResponseDTO();
@@ -73,9 +66,9 @@ class AvistadorControllerTest {
 
         given(createAvistadorUseCase.execute(any(AvistadorRequestDTO.class))).willReturn(resp);
 
-        // Stub del generate en el SPY (no dependemos del SECRET)
+        // ⭐ CAMBIO: Ahora generate recibe 4 parámetros (id primero)
         doReturn("JWT123").when(tokenService)
-                .generate(eq("12345678"), eq("a@a.com"), eq("ANA"));
+                .generate(eq(id.toString()), eq("12345678"), eq("a@a.com"), eq("ANA"));
 
         var res = mvc.perform(post("/api/avistadores")
                         .contentType("application/json")
@@ -87,7 +80,7 @@ class AvistadorControllerTest {
                 .andReturn();
 
         verify(createAvistadorUseCase).execute(any(AvistadorRequestDTO.class));
-        verify(tokenService).generate("12345678", "a@a.com", "ANA");
+        verify(tokenService).generate(id.toString(), "12345678", "a@a.com", "ANA"); // ⭐ 4 params
         verify(tokenService).writeCookie(any(), eq("JWT123"));
 
         var setCookies = res.getResponse().getHeaders("Set-Cookie");
@@ -96,9 +89,7 @@ class AvistadorControllerTest {
             assertThat(c).contains("FM_TOKEN=");
             assertThat(c).contains("HttpOnly");
             assertThat(c).contains("Path=/");
-            assertThat(c).contains("Max-Age=604800"); // 7 días
-            // SameSite=Lax puede o no serializarse -> opcional
-            // assertThat(c).contains("SameSite=Lax");
+            assertThat(c).contains("Max-Age=604800");
         });
     }
 
@@ -108,8 +99,8 @@ class AvistadorControllerTest {
         req.setDni("12345678");
         req.setNombre("ANA");
         req.setApellido("PEREZ");
-        req.setEdad(16);           // el caso de negocio que disparará DomainException
-        req.setEmail("a@a.com");   // evita validación previa
+        req.setEdad(16);
+        req.setEmail("a@a.com");
 
         var ex = DomainException.of("avistador.underage", HttpStatus.BAD_REQUEST, "Debe ser mayor de edad");
         given(createAvistadorUseCase.execute(any(AvistadorRequestDTO.class))).willThrow(ex);

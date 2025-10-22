@@ -1,20 +1,32 @@
 package edu.utn.proyecto.infrastructure.adapters.in.rest.dtos;
+import java.util.UUID;
 
 public class DesaparecidoFrontDTO {
+    private UUID id;                // 👈 nuevo
     private String nombre;
     private String apellido;
     private String dni;
     private String descripcion;
     private String foto;
-    private String fechaFormateada;  // ya como String listo para mostrar
+    private String fechaFormateada;
 
-    public DesaparecidoFrontDTO(String nombre, String apellido, String dni, String descripcion, String foto, String fechaFormateada) {
+    public DesaparecidoFrontDTO(UUID id, String nombre, String apellido, String dni,
+                                String descripcion, String foto, String fechaFormateada) {
+        this.id = id;
         this.nombre = nombre;
         this.apellido = apellido;
         this.dni = dni;
         this.descripcion = descripcion;
         this.foto = foto;
         this.fechaFormateada = fechaFormateada;
+    }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public String getNombre() {

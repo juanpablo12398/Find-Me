@@ -32,6 +32,7 @@ public class AvistadorController {
 
         // IMPORTANTE: Generar JWT y establecer cookie para auto-login
         String jwt = tokenService.generate(
+                dto.getId().toString(),
                 dto.getDni(),
                 dto.getEmail() != null ? dto.getEmail() : "",
                 dto.getNombre()

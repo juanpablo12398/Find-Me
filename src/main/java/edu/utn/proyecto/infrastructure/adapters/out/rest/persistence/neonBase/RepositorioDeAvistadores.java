@@ -37,6 +37,6 @@ public class RepositorioDeAvistadores implements IRepoDeAvistadores {
 
     @Override
     public Optional<AvistadorEntity> findById(UUID uuid) {
-        return Optional.empty();
+        return jpa.findById(uuid);
     }
 }

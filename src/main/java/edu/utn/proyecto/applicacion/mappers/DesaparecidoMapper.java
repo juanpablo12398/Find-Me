@@ -73,6 +73,7 @@ public class DesaparecidoMapper {
     public DesaparecidoFrontDTO fromResponseToFront(DesaparecidoResponseDTO dto) {
         final String fechaFormateada = dateNorm.formatForDisplay(dto.getFechaDesaparicion()); // null-safe
         return new DesaparecidoFrontDTO(
+                dto.getId(),
                 dto.getNombre(),
                 dto.getApellido(),
                 dto.getDni(),
