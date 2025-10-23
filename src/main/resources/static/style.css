@@ -178,6 +178,42 @@ img {
   color: #666;
 }
 
+.form__label {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.form__label-text {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: bold;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.form__label--checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.form__label--checkbox input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.form__hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+select.form__input {
+  cursor: pointer;
+}
+
 /* ============================================
    BUTTON (Block)
    ============================================ */
@@ -221,6 +257,16 @@ img {
 
 .button--secondary:hover {
   background: #e0e0e0;
+}
+
+.button--danger {
+  background: #f44336;
+  color: white;
+  font-weight: bold;
+}
+
+.button--danger:hover {
+  background: #da190b;
 }
 
 /* ============================================
@@ -293,41 +339,70 @@ img {
   gap: 10px;
 }
 
+/* Modo reportar activo */
+.map--reporting {
+  cursor: crosshair !important;
+}
+
+.map--reporting * {
+  cursor: crosshair !important;
+}
+
 /* ============================================
    POPUP (Block) - Para Leaflet
    ============================================ */
+
+/* ✅ Sobrescribir estilos de Leaflet para popups más compactos */
+.leaflet-popup-content-wrapper {
+  max-width: 300px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px !important;
+  line-height: 1.4 !important;
+  font-size: 14px !important;
+}
+
+/* ✅ Estilos del contenido interno del popup */
 .popup {
   font-family: Arial, sans-serif;
-  min-width: 200px;
-  max-width: 300px;
+  max-width: 280px;
 }
 
 .popup__title {
-  margin: 0 0 8px 0;
-  font-size: 1.1em;
+  font-size: 15px;
+  font-weight: bold;
+  margin: 0 0 6px 0;
   color: #333;
   border-bottom: 2px solid #4CAF50;
-  padding-bottom: 4px;
+  padding-bottom: 3px;
 }
 
+/* ✅ Imagen responsive que NO corta caras */
 .popup__image {
   width: 100%;
-  max-width: 200px;
   height: auto;
+  max-height: 140px;
+  object-fit: contain;
+  object-position: center;
   border-radius: 4px;
-  margin: 8px 0;
+  margin-bottom: 6px;
+  background-color: #f5f5f5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .popup__text {
-  margin: 4px 0;
-  font-size: 0.9em;
+  margin: 3px 0;
+  font-size: 12px;
   color: #666;
 }
 
 .popup__label {
+  font-weight: 600;
   color: #333;
-  font-weight: bold;
+  margin-right: 4px;
 }
 
 /* ============================================
@@ -337,19 +412,19 @@ img {
   display: inline-block;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 0.8em;
+  font-size: 12px;
   font-weight: bold;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .badge--verified {
-  background: #28a745;
+  background: #4caf50;
   color: white;
 }
 
 .badge--unverified {
-  background: #ffc107;
-  color: #333;
+  background: #ff9800;
+  color: white;
 }
 
 /* ============================================
@@ -439,51 +514,6 @@ img {
   font-size: 0.9rem;
   color: #0066cc;
   border-left: 3px solid #0066cc;
-}
-
-.form__label {
-  display: block;
-  margin-bottom: 16px;
-}
-
-.form__label-text {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-  color: #333;
-  font-size: 0.95rem;
-}
-
-.form__label--checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.form__label--checkbox input[type="checkbox"] {
-  width: auto;
-  margin: 0;
-}
-
-.form__hint {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-select.form__input {
-  cursor: pointer;
-}
-
-/* Modo reportar activo */
-.map--reporting {
-  cursor: crosshair !important;
-}
-
-.map--reporting * {
-  cursor: crosshair !important;
 }
 
 /* ============================================

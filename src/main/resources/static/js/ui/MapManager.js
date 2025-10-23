@@ -83,7 +83,7 @@ export class MapManager {
    */
   _enableMapClick() {
     if (!appState.map) return;
-    appState.map.on('click', this._onMapClick); // usa la referencia guardada
+    appState.map.on('click', this._onMapClick);
   }
 
   /**
@@ -92,7 +92,7 @@ export class MapManager {
    */
   _disableMapClick() {
     if (!appState.map) return;
-    appState.map.off('click', this._onMapClick); // misma referencia -> se desuscribe bien
+    appState.map.off('click', this._onMapClick);
   }
 
   /**
@@ -244,14 +244,6 @@ export class MapManager {
       };
 
       console.log('📤 Body a enviar:', JSON.stringify(body, null, 2));
-          console.log('📤 Tipos:', {
-              avistadorId: typeof body.avistadorId,
-              desaparecidoId: typeof body.desaparecidoId,
-              latitud: typeof body.latitud,
-              longitud: typeof body.longitud,
-              descripcion: typeof body.descripcion,
-              publico: typeof body.publico
-          });
 
       const created = await AvistamientoService.crear(body);
 
@@ -263,11 +255,12 @@ export class MapManager {
       // Agregar marker al mapa inmediatamente
       this._addMarker({
         id: created.id,
+        desaparecidoId: formData.desaparecidoId, // ✅ Agregar esto para el color
         latitud: created.latitud,
         longitud: created.longitud,
         fechaFormateada: "Recién reportado",
         descripcion: created.descripcion,
-        fotoUrl: created.fotoUrl, // puede venir como fotoUrl
+        fotoUrl: created.fotoUrl,
         verificado: false,
         desaparecidoNombre: formData.desaparecidoNombre || "",
         desaparecidoApellido: "",
@@ -291,9 +284,7 @@ export class MapManager {
           mapElement.classList.remove('map--reporting');
         }
 
-        // Por las dudas, también deshabilitamos el listener
         this._disableMapClick();
-
         this._updateEstado("✅ Avistamiento agregado al mapa", "green");
       }, 1000);
 
@@ -338,44 +329,99 @@ export class MapManager {
   }
 
   /**
-   * Agrega un marker al mapa
+   * Genera un color consistente basado en el ID del desaparecido
    * @private
    */
-  _addMarker(avistamiento) {
-    const iconUrl = avistamiento.verificado
-      ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'
-      : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png';
+  _getColorForDesaparecido(desaparecidoId) {
+    if (!desaparecidoId) return 'gold'; // fallback
 
-    const customIcon = L.icon({
-      iconUrl: iconUrl,
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
+    // Generar hash simple del UUID
+    let hash = 0;
+    const idStr = String(desaparecidoId);
+    for (let i = 0; i < idStr.length; i++) {
+      hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // Array de colores distintivos
+    const colors = [
+      'red',      // Rojo
+      'blue',     // Azul
+      'green',    // Verde
+      'violet',   // Violeta
+      'orange',   // Naranja
+      'yellow',   // Amarillo
+      'grey',     // Gris
+      'black'     // Negro
+    ];
+
+    // Seleccionar color basado en el hash
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
+  }
+
+/**
+ * Agrega un marker al mapa
+ * @private
+ */
+_addMarker(avistamiento) {
+  // Determinar color según desaparecido
+  const color = this._getColorForDesaparecido(avistamiento.desaparecidoId);
+
+  // Verificado = verde, No verificado = color del desaparecido
+  const iconUrl = avistamiento.verificado
+    ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'
+    : `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
+
+  const customIcon = L.icon({
+    iconUrl: iconUrl,
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
+
+  const marker = L.marker([avistamiento.latitud, avistamiento.longitud], { icon: customIcon });
+
+  const foto = avistamiento.desaparecidoFoto ?? avistamiento.fotoUrl ?? '';
+
+  const popupContent = `
+    <div class="popup">
+      <h3 class="popup__title">${avistamiento.desaparecidoNombre} ${avistamiento.desaparecidoApellido}</h3>
+      ${foto ? `<img class="popup__image" src="${foto}" alt="Foto" loading="lazy">` : ''}
+      <p class="popup__text"><span class="popup__label">📅</span> ${avistamiento.fechaFormateada}</p>
+      <p class="popup__text"><span class="popup__label">📝</span> ${avistamiento.descripcion}</p>
+      <p class="popup__text"><span class="popup__label">👤</span> ${avistamiento.avistadorNombre}</p>
+      ${avistamiento.verificado
+        ? '<span class="badge badge--verified">✓ Verificado</span>'
+        : '<span class="badge badge--unverified">⚠ Sin verificar</span>'}
+    </div>
+  `;
+
+  marker.bindPopup(popupContent, {
+    maxWidth: 300,
+    minWidth: 250,
+    autoPan: false,
+    keepInView: false
+  });
+
+  marker.on('click', () => {
+    // Calcular la posición ajustada ANTES de abrir el popup
+    const px = appState.map.project(marker.getLatLng());
+    px.y -= 160; // Ajustar hacia arriba para compensar el popup
+    const targetLatLng = appState.map.unproject(px);
+
+    // Centrar el mapa SIN animación (instantáneo)
+    appState.map.setView(targetLatLng, appState.map.getZoom(), {
+      animate: true
     });
 
-    const marker = L.marker([avistamiento.latitud, avistamiento.longitud], { icon: customIcon });
+    // Abrir el popup DESPUÉS de centrar
+    marker.openPopup();
+  });
 
-    // 🛠️ Fix #2: soportar ambos nombres de propiedad para la foto
-    const foto = avistamiento.desaparecidoFoto ?? avistamiento.fotoUrl ?? '';
-
-    const popupContent = `
-      <div class="popup">
-        <h3 class="popup__title">${avistamiento.desaparecidoNombre} ${avistamiento.desaparecidoApellido}</h3>
-        ${foto ? `<img class="popup__image" src="${foto}" alt="Foto">` : ''}
-        <p class="popup__text"><span class="popup__label">📅 Fecha:</span> ${avistamiento.fechaFormateada}</p>
-        <p class="popup__text"><span class="popup__label">📝 Descripción:</span> ${avistamiento.descripcion}</p>
-        <p class="popup__text"><span class="popup__label">👤 Reportado por:</span> ${avistamiento.avistadorNombre}</p>
-        ${avistamiento.verificado
-          ? '<span class="badge badge--verified">✓ Verificado</span>'
-          : '<span class="badge badge--unverified">⚠ Sin verificar</span>'}
-      </div>
-    `;
-
-    marker.bindPopup(popupContent);
-    marker.addTo(appState.markersLayer);
-  }
+  marker.addTo(appState.markersLayer);
+}
 
   /**
    * Actualiza el mensaje de estado del mapa
