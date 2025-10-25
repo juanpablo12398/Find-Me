@@ -26,8 +26,7 @@ public class AvistadorRenaperMatchRule implements Rule<AvistadorRequestDTO> {
         if (!dto.getNombre().equals(persona.getNombre()) || !dto.getApellido().equals(persona.getApellido())) {
             throw DomainException.of(
                     AvistadorError.PADRON_NO_MATCH.key,
-                    AvistadorError.PADRON_NO_MATCH.status,
-                    "Los datos no coinciden con el padrón"
+                    AvistadorError.PADRON_NO_MATCH.status
             );
         }
     }

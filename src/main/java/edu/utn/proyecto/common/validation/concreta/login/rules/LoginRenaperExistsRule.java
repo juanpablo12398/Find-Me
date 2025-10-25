@@ -20,8 +20,8 @@ public class LoginRenaperExistsRule implements Rule<LoginRequestDTO> {
         renaper.findByDni(dto.getDni())
                 .orElseThrow(() -> DomainException.of(
                         AuthError.PADRON_NOT_FOUND.key,
-                        AuthError.PADRON_NOT_FOUND.status,
-                        "No existe en padrón (RENAPER)."));
+                        AuthError.PADRON_NOT_FOUND.status
+                ));
     }
 }
 

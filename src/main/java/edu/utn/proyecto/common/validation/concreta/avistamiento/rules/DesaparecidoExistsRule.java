@@ -24,8 +24,7 @@ public class DesaparecidoExistsRule implements Rule<AvistamientoRequestDTO> {
                 !repo.findById(UUID.fromString(dto.getDesaparecidoId())).isPresent()) {
             throw DomainException.of(
                     AvistamientoError.DESAPARECIDO_NOT_FOUND.key,
-                    AvistamientoError.DESAPARECIDO_NOT_FOUND.status,
-                    "El desaparecido no existe"
+                    AvistamientoError.DESAPARECIDO_NOT_FOUND.status
             );
         }
     }

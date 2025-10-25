@@ -11,18 +11,12 @@ public class DomainException extends RuntimeException {
         this.status = status;
     }
 
-    public static DomainException of(String key, HttpStatus status, Object... args) {
-        // Si hay argumentos, úsalos como mensaje, sino usa un mensaje por defecto
-        String msg;
-        if (args != null && args.length > 0) {
-            msg = String.join(" ", java.util.Arrays.stream(args)
-                    .map(String::valueOf)
-                    .toList());
-        } else {
-            // Mensaje por defecto basado en la key
-            msg = "Error: " + key;
-        }
-        return new DomainException(key, status, msg);
+    public static DomainException of(String key, HttpStatus status, String message) {
+        return new DomainException(key, status, message);
+    }
+
+    public static DomainException of(String key, HttpStatus status) {
+        return new DomainException(key, status, key);  // Fallback = key
     }
 
     public String getKey() { return key; }

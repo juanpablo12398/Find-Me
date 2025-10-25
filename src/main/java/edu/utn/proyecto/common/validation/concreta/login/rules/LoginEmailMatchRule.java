@@ -23,8 +23,7 @@ public class LoginEmailMatchRule implements Rule<LoginRequestDTO> {
         if (!dto.getEmail().equals(avistador.getEmail())) {
             throw DomainException.of(
                     AuthError.EMAIL_MISMATCH.key,
-                    AuthError.EMAIL_MISMATCH.status,
-                    "El email no coincide con el registrado"
+                    AuthError.EMAIL_MISMATCH.status
             );
         }
     }

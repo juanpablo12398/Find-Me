@@ -23,8 +23,7 @@ public class AvistadorDniDuplicadoRule implements Rule<AvistadorRequestDTO> {
         if (dto.getDni() != null && repo.existsByDni(dto.getDni())) {
             throw DomainException.of(
                     AvistadorError.DNI_DUP.key,
-                    AvistadorError.DNI_DUP.status,
-                    "DNI ya registrado"
+                    AvistadorError.DNI_DUP.status
             );
         }
     }

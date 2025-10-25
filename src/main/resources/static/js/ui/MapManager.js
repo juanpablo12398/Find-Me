@@ -2,6 +2,10 @@ import { appState } from '../config/state.js';
 import { AuthService } from '../services/AuthService.js';
 import { DesaparecidoService } from '../services/DesaparecidoService.js';
 import { AvistamientoService } from '../services/AvistamientoService.js';
+import { getMarkerIconUrl, MARKER_ICON_CONFIG } from '../utils/colors.js';
+import { createPopupContent, createDesaparecidoOption } from '../utils/templates.js';
+import { isValidSelection, showError, showSuccess, showLoading } from '../utils/validators.js';
+import { getValue, setButtonState, createOption } from '../utils/dom.js';
 
 /**
  * Gestor del mapa Leaflet
@@ -13,14 +17,29 @@ export class MapManager {
     this.isReportMode = false;
     this.tempMarker = null;
     this.selectedLatLng = null;
-
-    // 🛠️ Fix #1: conservar referencia del handler ligado
     this._onMapClick = this._handleMapClick.bind(this);
+        this._preloadMarkerIcons();
   }
 
   /**
-   * Inicializa el mapa de Leaflet
+   * Precarga las imágenes de los íconos para evitar problemas de carga
+   * @private
    */
+  _preloadMarkerIcons() {
+    const colors = ['red', 'blue', 'green', 'violet', 'orange', 'yellow', 'grey', 'black', 'gold'];
+    const baseUrl = 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img';
+
+    colors.forEach(color => {
+      const img = new Image();
+      img.src = `${baseUrl}/marker-icon-2x-${color}.png`;
+    });
+
+    const shadow = new Image();
+    shadow.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png';
+
+    console.log('🎨 Precargando íconos de markers...');
+  }
+
   init() {
     const map = L.map('map').setView([-34.6037, -58.3816], 12);
 
@@ -29,20 +48,13 @@ export class MapManager {
       maxZoom: 19
     }).addTo(map);
 
-    const markersLayer = L.layerGroup().addTo(map);
-
-    // Guardar en estado global
     appState.map = map;
-    appState.markersLayer = markersLayer;
+    appState.markersLayer = L.layerGroup().addTo(map);
 
     this._updateEstado("✅ Mapa inicializado", "green");
     this._setupReportMode();
   }
 
-  /**
-   * Configura el modo de reportar avistamientos
-   * @private
-   */
   _setupReportMode() {
     const btnToggle = document.getElementById("btnToggleReportar");
     const mapElement = document.getElementById("map");
@@ -50,7 +62,6 @@ export class MapManager {
     if (!btnToggle) return;
 
     btnToggle.onclick = () => {
-      // Verificar autenticación
       if (!AuthService.getCurrentUser()) {
         alert("Debés iniciar sesión para reportar un avistamiento.");
         return;
@@ -63,7 +74,7 @@ export class MapManager {
         btnToggle.classList.remove('button--primary');
         btnToggle.classList.add('button--danger');
         mapElement.classList.add('map--reporting');
-        this._updateEstado("🎯 Click en el mapa para marcar ubicación del avistamiento", "#0066cc");
+        this._updateEstado("🎯 Click en el mapa para marcar ubicación", "#0066cc");
         this._enableMapClick();
       } else {
         btnToggle.textContent = "📍 Activar Modo Reportar";
@@ -77,45 +88,25 @@ export class MapManager {
     };
   }
 
-  /**
-   * Habilita el click en el mapa para reportar
-   * @private
-   */
   _enableMapClick() {
-    if (!appState.map) return;
-    appState.map.on('click', this._onMapClick);
+    if (appState.map) appState.map.on('click', this._onMapClick);
   }
 
-  /**
-   * Deshabilita el click en el mapa
-   * @private
-   */
   _disableMapClick() {
-    if (!appState.map) return;
-    appState.map.off('click', this._onMapClick);
+    if (appState.map) appState.map.off('click', this._onMapClick);
   }
 
-  /**
-   * Maneja el click en el mapa
-   * @private
-   */
   _handleMapClick(e) {
     if (!this.isReportMode) return;
 
     const { lat, lng } = e.latlng;
     this.selectedLatLng = { lat, lng };
 
-    // Remover marker temporal anterior
     this._removeTempMarker();
 
-    // Crear marker temporal
     const tempIcon = L.icon({
       iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
+      ...MARKER_ICON_CONFIG
     });
 
     this.tempMarker = L.marker([lat, lng], { icon: tempIcon })
@@ -123,14 +114,9 @@ export class MapManager {
       .bindPopup("📍 Ubicación del avistamiento")
       .openPopup();
 
-    // Abrir modal
     this._openModal(lat, lng);
   }
 
-  /**
-   * Remueve el marker temporal
-   * @private
-   */
   _removeTempMarker() {
     if (this.tempMarker && appState.map) {
       appState.map.removeLayer(this.tempMarker);
@@ -138,10 +124,6 @@ export class MapManager {
     }
   }
 
-  /**
-   * Abre el modal de reportar avistamiento
-   * @private
-   */
   _openModal(lat, lng) {
     const modal = document.getElementById("modalAvistamiento");
     const coordsSpan = document.getElementById("modalLatLng");
@@ -154,13 +136,9 @@ export class MapManager {
       modal.classList.remove('u-hidden');
     }
 
-    // Cargar lista de desaparecidos
     this._loadDesaparecidosSelect();
   }
 
-  /**
-   * Cierra el modal
-   */
   closeModal() {
     const modal = document.getElementById("modalAvistamiento");
     if (modal) {
@@ -168,7 +146,6 @@ export class MapManager {
     }
     this._removeTempMarker();
 
-    // Resetear formulario
     const form = document.getElementById("formAvistamiento");
     if (form) form.reset();
 
@@ -176,23 +153,16 @@ export class MapManager {
     if (result) result.textContent = "";
   }
 
-  /**
-   * Carga la lista de desaparecidos en el select
-   * @private
-   */
   async _loadDesaparecidosSelect() {
     const select = document.getElementById("av_desaparecido");
     if (!select) return;
 
     try {
       const desaparecidos = await DesaparecidoService.obtenerTodos();
-
       select.innerHTML = '<option value="">-- Seleccionar --</option>';
 
       desaparecidos.forEach(d => {
-        const option = document.createElement('option');
-        option.value = d.id;
-        option.textContent = `${d.nombre} ${d.apellido} (DNI: ${d.dni})`;
+        const option = createOption(d.id, createDesaparecidoOption(d));
         select.appendChild(option);
       });
 
@@ -202,35 +172,23 @@ export class MapManager {
     }
   }
 
-  /**
-   * Envía el avistamiento
-   */
   async submitAvistamiento(formData) {
     const result = document.getElementById("avistamientoResult");
     const btn = document.getElementById("btnSubmitAvistamiento");
 
     if (!this.selectedLatLng) {
-      if (result) {
-        result.textContent = "❌ Error: No hay coordenadas seleccionadas";
-        result.style.color = "red";
-      }
+      showError(result, "No hay coordenadas seleccionadas");
       return;
     }
 
     const user = AuthService.getCurrentUser();
     if (!user) {
-      if (result) {
-        result.textContent = "❌ Debes iniciar sesión";
-        result.style.color = "red";
-      }
+      showError(result, "Debes iniciar sesión");
       return;
     }
 
-    if (result) {
-      result.textContent = "Enviando...";
-      result.style.color = "#666";
-    }
-    if (btn) btn.disabled = true;
+    showLoading(result, "Enviando...");
+    setButtonState("btnSubmitAvistamiento", true);
 
     try {
       const body = {
@@ -243,19 +201,13 @@ export class MapManager {
         publico: formData.publico
       };
 
-      console.log('📤 Body a enviar:', JSON.stringify(body, null, 2));
-
       const created = await AvistamientoService.crear(body);
 
-      if (result) {
-        result.textContent = "✅ Avistamiento reportado exitosamente";
-        result.style.color = "green";
-      }
+      showSuccess(result, "Avistamiento reportado exitosamente");
 
-      // Agregar marker al mapa inmediatamente
       this._addMarker({
         id: created.id,
-        desaparecidoId: formData.desaparecidoId, // ✅ Agregar esto para el color
+        desaparecidoId: formData.desaparecidoId,
         latitud: created.latitud,
         longitud: created.longitud,
         fechaFormateada: "Recién reportado",
@@ -267,7 +219,6 @@ export class MapManager {
         avistadorNombre: user.nombre || user.dni
       });
 
-      // Cerrar modal después de 1 segundo
       setTimeout(() => {
         this.closeModal();
         this.isReportMode = false;
@@ -289,18 +240,12 @@ export class MapManager {
       }, 1000);
 
     } catch (err) {
-      if (result) {
-        result.textContent = "❌ " + err.message;
-        result.style.color = "red";
-      }
+      showError(result, err.message);
     } finally {
-      if (btn) btn.disabled = false;
+      setButtonState("btnSubmitAvistamiento", false);
     }
   }
 
-  /**
-   * Carga avistamientos en el mapa
-   */
   async loadAvistamientos() {
     if (!appState.map) return;
 
@@ -308,7 +253,6 @@ export class MapManager {
 
     try {
       const avistamientos = await AvistamientoService.getAvistamientosParaMapa();
-
       appState.markersLayer.clearLayers();
 
       if (avistamientos.length === 0) {
@@ -328,105 +272,39 @@ export class MapManager {
     }
   }
 
-  /**
-   * Genera un color consistente basado en el ID del desaparecido
-   * @private
-   */
-  _getColorForDesaparecido(desaparecidoId) {
-    if (!desaparecidoId) return 'gold'; // fallback
+  _addMarker(avistamiento) {
+    const iconUrl = getMarkerIconUrl(avistamiento.verificado, avistamiento.desaparecidoId);
 
-    // Generar hash simple del UUID
-    let hash = 0;
-    const idStr = String(desaparecidoId);
-    for (let i = 0; i < idStr.length; i++) {
-      hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    // Array de colores distintivos
-    const colors = [
-      'red',      // Rojo
-      'blue',     // Azul
-      'green',    // Verde
-      'violet',   // Violeta
-      'orange',   // Naranja
-      'yellow',   // Amarillo
-      'grey',     // Gris
-      'black'     // Negro
-    ];
-
-    // Seleccionar color basado en el hash
-    const index = Math.abs(hash) % colors.length;
-    return colors[index];
-  }
-
-/**
- * Agrega un marker al mapa
- * @private
- */
-_addMarker(avistamiento) {
-  // Determinar color según desaparecido
-  const color = this._getColorForDesaparecido(avistamiento.desaparecidoId);
-
-  // Verificado = verde, No verificado = color del desaparecido
-  const iconUrl = avistamiento.verificado
-    ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'
-    : `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
-
-  const customIcon = L.icon({
-    iconUrl: iconUrl,
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-  });
-
-  const marker = L.marker([avistamiento.latitud, avistamiento.longitud], { icon: customIcon });
-
-  const foto = avistamiento.desaparecidoFoto ?? avistamiento.fotoUrl ?? '';
-
-  const popupContent = `
-    <div class="popup">
-      <h3 class="popup__title">${avistamiento.desaparecidoNombre} ${avistamiento.desaparecidoApellido}</h3>
-      ${foto ? `<img class="popup__image" src="${foto}" alt="Foto" loading="lazy">` : ''}
-      <p class="popup__text"><span class="popup__label">📅</span> ${avistamiento.fechaFormateada}</p>
-      <p class="popup__text"><span class="popup__label">📝</span> ${avistamiento.descripcion}</p>
-      <p class="popup__text"><span class="popup__label">👤</span> ${avistamiento.avistadorNombre}</p>
-      ${avistamiento.verificado
-        ? '<span class="badge badge--verified">✓ Verificado</span>'
-        : '<span class="badge badge--unverified">⚠ Sin verificar</span>'}
-    </div>
-  `;
-
-  marker.bindPopup(popupContent, {
-    maxWidth: 300,
-    minWidth: 250,
-    autoPan: false,
-    keepInView: false
-  });
-
-  marker.on('click', () => {
-    // Calcular la posición ajustada ANTES de abrir el popup
-    const px = appState.map.project(marker.getLatLng());
-    px.y -= 160; // Ajustar hacia arriba para compensar el popup
-    const targetLatLng = appState.map.unproject(px);
-
-    // Centrar el mapa SIN animación (instantáneo)
-    appState.map.setView(targetLatLng, appState.map.getZoom(), {
-      animate: true
+    const customIcon = L.icon({
+      iconUrl,
+      ...MARKER_ICON_CONFIG
     });
 
-    // Abrir el popup DESPUÉS de centrar
-    marker.openPopup();
-  });
+    const marker = L.marker([avistamiento.latitud, avistamiento.longitud], { icon: customIcon });
+    const popupContent = createPopupContent(avistamiento);
 
-  marker.addTo(appState.markersLayer);
-}
+    marker.bindPopup(popupContent, {
+      maxWidth: 300,
+      minWidth: 250,
+      autoPan: false,
+      keepInView: false
+    });
 
-  /**
-   * Actualiza el mensaje de estado del mapa
-   * @private
-   */
+    marker.on('click', () => {
+      const px = appState.map.project(marker.getLatLng());
+      px.y -= 160;
+      const targetLatLng = appState.map.unproject(px);
+
+      appState.map.setView(targetLatLng, appState.map.getZoom(), {
+        animate: true
+      });
+
+      marker.openPopup();
+    });
+
+    marker.addTo(appState.markersLayer);
+  }
+
   _updateEstado(mensaje, color) {
     if (this.mapaEstado) {
       this.mapaEstado.textContent = mensaje;

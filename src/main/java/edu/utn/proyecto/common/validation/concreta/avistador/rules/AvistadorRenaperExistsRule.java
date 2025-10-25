@@ -24,8 +24,7 @@ public class AvistadorRenaperExistsRule implements Rule<AvistadorRequestDTO> {
                 !renaper.findByDni(dto.getDni()).isPresent()) {
             throw DomainException.of(
                     AvistadorError.PADRON_NOT_FOUND.key,
-                    AvistadorError.PADRON_NOT_FOUND.status,
-                    "No existe en padrón (RENAPER)"
+                    AvistadorError.PADRON_NOT_FOUND.status
             );
         }
     }

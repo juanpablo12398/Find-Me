@@ -21,8 +21,7 @@ public class DesaparecidoDniDuplicadoRule implements Rule<DesaparecidoRequestDTO
         if (dto.getDni() != null && repo.existsByDni(dto.getDni())) {
             throw DomainException.of(
                     DesaparecidoError.DNI_DUP.key,
-                    DesaparecidoError.DNI_DUP.status,
-                    "DNI " + dto.getDni() + " ya registrado"
+                    DesaparecidoError.DNI_DUP.status
             );
         }
     }

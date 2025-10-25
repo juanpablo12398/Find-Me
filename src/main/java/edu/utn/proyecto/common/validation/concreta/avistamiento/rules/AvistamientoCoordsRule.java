@@ -17,8 +17,7 @@ public class AvistamientoCoordsRule implements Rule<AvistamientoRequestDTO> {
                 dto.getLatitud() < -90 || dto.getLatitud() > 90) {
             throw DomainException.of(
                     AvistamientoError.COORDS_INVALID.key,
-                    AvistamientoError.COORDS_INVALID.status,
-                    "Latitud debe estar entre -90 y 90"
+                    AvistamientoError.COORDS_INVALID.status
             );
         }
 
@@ -26,8 +25,7 @@ public class AvistamientoCoordsRule implements Rule<AvistamientoRequestDTO> {
                 dto.getLongitud() < -180 || dto.getLongitud() > 180) {
             throw DomainException.of(
                     AvistamientoError.COORDS_INVALID.key,
-                    AvistamientoError.COORDS_INVALID.status,
-                    "Longitud debe estar entre -180 y 180"
+                    AvistamientoError.COORDS_INVALID.status
             );
         }
     }

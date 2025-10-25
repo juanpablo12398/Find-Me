@@ -21,8 +21,7 @@ public class LoginAvistadorExistsRule implements Rule<LoginRequestDTO> {
         repo.findByDni(dto.getDni())
                 .orElseThrow(() -> DomainException.of(
                         AuthError.USER_NOT_FOUND.key,
-                        AuthError.USER_NOT_FOUND.status,
-                        "Usuario no registrado"
+                        AuthError.USER_NOT_FOUND.status
                 ));
     }
 }

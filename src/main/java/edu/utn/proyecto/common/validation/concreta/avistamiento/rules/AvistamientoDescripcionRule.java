@@ -18,8 +18,7 @@ public class AvistamientoDescripcionRule implements Rule<AvistamientoRequestDTO>
                 dto.getDescripcion().trim().length() < MIN_LENGTH) {
             throw DomainException.of(
                     AvistamientoError.DESC_SHORT.key,
-                    AvistamientoError.DESC_SHORT.status,
-                    "La descripción debe tener al menos " + MIN_LENGTH + " caracteres"
+                    AvistamientoError.DESC_SHORT.status
             );
         }
     }

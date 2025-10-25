@@ -24,8 +24,7 @@ public class AvistadorExistsRule implements Rule<AvistamientoRequestDTO> {
                 !repo.findById(UUID.fromString(dto.getAvistadorId())).isPresent()) {
             throw DomainException.of(
                     AvistamientoError.AVISTADOR_NOT_FOUND.key,
-                    AvistamientoError.AVISTADOR_NOT_FOUND.status,
-                    "El avistador no existe"
+                    AvistamientoError.AVISTADOR_NOT_FOUND.status
             );
         }
     }
