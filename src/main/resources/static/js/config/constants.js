@@ -22,6 +22,10 @@ export const ERROR_MAPS = {
   DESAPARECIDO: {
     401: { default: "Debés iniciar sesión para registrar un desaparecido." },
     409: { default: "Ya existe un desaparecido con ese DNI." },
+    404: {
+      "desaparecido.renaper.notfound": "No se encontró el DNI en el padrón de RENAPER.",  // ✅ NUEVO
+      default: "Recurso no encontrado."
+    },
     422: {
       "desaparecido.descripcion.corta": "La descripción debe tener al menos 20 caracteres.",
       default: "Los datos enviados no son válidos."
