@@ -53,6 +53,12 @@ export const ERROR_MAPS = {
     },
     422: {
       "avistamiento.coords.invalidas": "Las coordenadas son inválidas.",
+      "avistamiento.coords.lat.required": "La latitud es obligatoria.",
+      "avistamiento.coords.lat.range": "La latitud está fuera de rango.",
+      "avistamiento.coords.lat.naninf": "La latitud no es un número válido.",
+      "avistamiento.coords.lng.required": "La longitud es obligatoria.",
+      "avistamiento.coords.lng.range": "La longitud está fuera de rango.",
+      "avistamiento.coords.lng.naninf": "La longitud no es un número válido.",
       "avistamiento.descripcion.corta": "La descripción debe tener al menos 20 caracteres.",
       default: "Datos inválidos."
     },

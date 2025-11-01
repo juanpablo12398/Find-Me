@@ -1,4 +1,5 @@
 package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.mappers;
+import edu.utn.proyecto.infrastructure.normalize.GeometryNormalizer;
 import edu.utn.proyecto.domain.model.concreta.Avistamiento;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.AvistamientoEntity;
 import org.springframework.stereotype.Component;
@@ -6,35 +7,40 @@ import org.springframework.stereotype.Component;
 @Component
 public class AvistamientoPersistenceMapper {
 
-    public AvistamientoEntity domainToEntity(Avistamiento d) {
-        AvistamientoEntity e = new AvistamientoEntity();
-        e.setId(d.getId());
-        e.setAvistadorId(d.getAvistadorId());
-        e.setDesaparecidoId(d.getDesaparecidoId());
-        e.setLatitud(d.getLatitud());
-        e.setLongitud(d.getLongitud());
-        e.setFechaHora(d.getFechaHora());
-        e.setDescripcion(d.getDescripcion());
-        e.setFotoUrl(d.getFotoUrl());
-        e.setVerificado(d.getVerificado());
-        e.setPublico(d.getPublico());
-        e.setCreadoEn(d.getCreadoEn());
-        return e;
+    private final GeometryNormalizer geomNorm;
+
+    public AvistamientoPersistenceMapper(GeometryNormalizer geomNorm) {
+        this.geomNorm = geomNorm;
     }
 
-    public Avistamiento entityToDomain(AvistamientoEntity e) {
-        Avistamiento d = new Avistamiento();
-        d.setId(e.getId());
-        d.setAvistadorId(e.getAvistadorId());
-        d.setDesaparecidoId(e.getDesaparecidoId());
-        d.setLatitud(e.getLatitud());
-        d.setLongitud(e.getLongitud());
-        d.setFechaHora(e.getFechaHora());
-        d.setDescripcion(e.getDescripcion());
-        d.setFotoUrl(e.getFotoUrl());
-        d.setVerificado(e.getVerificado());
-        d.setPublico(e.getPublico());
-        d.setCreadoEn(e.getCreadoEn());
-        return d;
+    public Avistamiento toDomain(AvistamientoEntity entity) {
+        Avistamiento domain = new Avistamiento();
+        domain.setId(entity.getId());
+        domain.setAvistadorId(entity.getAvistadorId());
+        domain.setDesaparecidoId(entity.getDesaparecidoId());
+        domain.setLatitud(geomNorm.fromPointToLatitud(entity.getUbicacion()));
+        domain.setLongitud(geomNorm.fromPointToLongitud(entity.getUbicacion()));
+        domain.setFechaHora(entity.getFechaHora());
+        domain.setDescripcion(entity.getDescripcion());
+        domain.setFotoUrl(entity.getFotoUrl());
+        domain.setVerificado(entity.getVerificado());
+        domain.setPublico(entity.getPublico());
+        domain.setCreadoEn(entity.getCreadoEn());
+        return domain;
+    }
+
+    public AvistamientoEntity toEntity(Avistamiento domain) {
+        AvistamientoEntity entity = new AvistamientoEntity();
+        entity.setId(domain.getId());
+        entity.setAvistadorId(domain.getAvistadorId());
+        entity.setDesaparecidoId(domain.getDesaparecidoId());
+        entity.setUbicacion(geomNorm.toPoint(domain.getLatitud(), domain.getLongitud()));
+        entity.setFechaHora(domain.getFechaHora());
+        entity.setDescripcion(domain.getDescripcion());
+        entity.setFotoUrl(domain.getFotoUrl());
+        entity.setVerificado(domain.getVerificado());
+        entity.setPublico(domain.getPublico());
+        entity.setCreadoEn(domain.getCreadoEn());
+        return entity;
     }
 }

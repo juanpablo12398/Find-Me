@@ -1,7 +1,3 @@
-/**
- * Feature: Lista de desaparecidos
- */
-
 import { DesaparecidoService } from '../../services/DesaparecidoService.js';
 
 export class DesaparecidosList {

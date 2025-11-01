@@ -14,20 +14,36 @@ class TextNormalizerTest {
     }
 
     @Test
-    void trimea_y_uppercase() {
-        assertThat(normalizer.upperNoAccents("  ana  ")).isEqualTo("ANA");
+    void devuelveNull_siEntradaBlank() {
+        assertThat(normalizer.upperNoAccents("   ")).isNull();
+    }
+
+    @Test
+    void trimea_y_titleCaseGlobal() {
+        assertThat(normalizer.upperNoAccents("  ana  ")).isEqualTo("Ana");
     }
 
     @ParameterizedTest
     @CsvSource({
-            "áéíóú, AEIOU",
-            "ÁÉÍÓÚ, AEIOU",
-            "ñ Ñ, N N",
-            "María-José, MARIA-JOSE",
-            "  pérez gómez , PEREZ GOMEZ",
-            "lücía, LUCIA"
+            "áéíóú, Aeiou",
+            "ÁÉÍÓÚ, Aeiou",
+            "'ñ Ñ', 'N n'",
+            "María-José, Maria-jose",
+            "'  pérez gómez ', 'Perez gomez'",
+            "lücía, Lucia"
     })
-    void eliminaTildesYDiacriticos_yPoneMayusculas(String in, String expected) {
+    void eliminaTildesYDiacriticos_yAplicaTitleCaseGlobal(String in, String expected) {
         assertThat(normalizer.upperNoAccents(in)).isEqualTo(expected);
+    }
+
+    @Test
+    void sentenceCase_respetaTituloSimpleSinQuitarAcentos() {
+        assertThat(normalizer.sentenceCase("  hOlA MUnDo  ")).isEqualTo("Hola mundo");
+    }
+
+    @Test
+    void normalize_trim_simple() {
+        assertThat(normalizer.normalize("  abc  ")).isEqualTo("abc");
+        assertThat(normalizer.normalize(null)).isNull();
     }
 }

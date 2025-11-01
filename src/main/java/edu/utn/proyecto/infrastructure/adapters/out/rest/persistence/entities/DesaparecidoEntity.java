@@ -8,8 +8,6 @@ import java.util.UUID;
 public class DesaparecidoEntity {
     @Id
     @GeneratedValue
-    // @JdbcTypeCode(SqlTypes.UUID)
-    // Si hay problemas con el mapeo de UUID, descomentar la línea anterior
     private UUID id;
     private String nombre;
     private String apellido;

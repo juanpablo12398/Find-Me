@@ -2,6 +2,7 @@ package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.locationtech.jts.geom.Point;
 
 @Entity
 @Table(name = "avistamientos", schema = "public")
@@ -17,11 +18,8 @@ public class AvistamientoEntity {
     @Column(name = "desaparecido_id", nullable = false)
     private UUID desaparecidoId;
 
-    @Column(nullable = false)
-    private Double latitud;
-
-    @Column(nullable = false)
-    private Double longitud;
+    @Column(name = "ubicacion", columnDefinition = "geometry(Point, 4326)")
+    private Point ubicacion;
 
     @Column(name = "fecha_hora", nullable = false)
     private LocalDateTime fechaHora;
@@ -43,12 +41,11 @@ public class AvistamientoEntity {
 
     public AvistamientoEntity() {}
 
-    public AvistamientoEntity(UUID id, UUID avistadorId, UUID desaparecidoId, Double latitud, Double longitud, LocalDateTime fechaHora, String descripcion, String fotoUrl, Boolean verificado, Boolean publico, LocalDateTime creadoEn) {
+    public AvistamientoEntity(UUID id, UUID avistadorId, UUID desaparecidoId, Point ubicacion, LocalDateTime fechaHora, String descripcion, String fotoUrl, Boolean verificado, Boolean publico, LocalDateTime creadoEn) {
         this.id = id;
         this.avistadorId = avistadorId;
         this.desaparecidoId = desaparecidoId;
-        this.latitud = latitud;
-        this.longitud = longitud;
+        this.ubicacion = ubicacion;
         this.fechaHora = fechaHora;
         this.descripcion = descripcion;
         this.fotoUrl = fotoUrl;
@@ -57,36 +54,83 @@ public class AvistamientoEntity {
         this.creadoEn = creadoEn;
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public UUID getAvistadorId() { return avistadorId; }
-    public void setAvistadorId(UUID avistadorId) { this.avistadorId = avistadorId; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public UUID getDesaparecidoId() { return desaparecidoId; }
-    public void setDesaparecidoId(UUID desaparecidoId) { this.desaparecidoId = desaparecidoId; }
+    public UUID getAvistadorId() {
+        return avistadorId;
+    }
 
-    public Double getLatitud() { return latitud; }
-    public void setLatitud(Double latitud) { this.latitud = latitud; }
+    public void setAvistadorId(UUID avistadorId) {
+        this.avistadorId = avistadorId;
+    }
 
-    public Double getLongitud() { return longitud; }
-    public void setLongitud(Double longitud) { this.longitud = longitud; }
+    public UUID getDesaparecidoId() {
+        return desaparecidoId;
+    }
 
-    public LocalDateTime getFechaHora() { return fechaHora; }
-    public void setFechaHora(LocalDateTime fechaHora) { this.fechaHora = fechaHora; }
+    public void setDesaparecidoId(UUID desaparecidoId) {
+        this.desaparecidoId = desaparecidoId;
+    }
 
-    public String getDescripcion() { return descripcion; }
-    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+    public Point getUbicacion() {
+        return ubicacion;
+    }
 
-    public String getFotoUrl() { return fotoUrl; }
-    public void setFotoUrl(String fotoUrl) { this.fotoUrl = fotoUrl; }
+    public void setUbicacion(Point ubicacion) {
+        this.ubicacion = ubicacion;
+    }
 
-    public Boolean getVerificado() { return verificado; }
-    public void setVerificado(Boolean verificado) { this.verificado = verificado; }
+    public LocalDateTime getFechaHora() {
+        return fechaHora;
+    }
 
-    public Boolean getPublico() { return publico; }
-    public void setPublico(Boolean publico) { this.publico = publico; }
+    public void setFechaHora(LocalDateTime fechaHora) {
+        this.fechaHora = fechaHora;
+    }
 
-    public LocalDateTime getCreadoEn() { return creadoEn; }
-    public void setCreadoEn(LocalDateTime creadoEn) { this.creadoEn = creadoEn; }
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public String getFotoUrl() {
+        return fotoUrl;
+    }
+
+    public void setFotoUrl(String fotoUrl) {
+        this.fotoUrl = fotoUrl;
+    }
+
+    public Boolean getVerificado() {
+        return verificado;
+    }
+
+    public void setVerificado(Boolean verificado) {
+        this.verificado = verificado;
+    }
+
+    public Boolean getPublico() {
+        return publico;
+    }
+
+    public void setPublico(Boolean publico) {
+        this.publico = publico;
+    }
+
+    public LocalDateTime getCreadoEn() {
+        return creadoEn;
+    }
+
+    public void setCreadoEn(LocalDateTime creadoEn) {
+        this.creadoEn = creadoEn;
+    }
 }

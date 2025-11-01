@@ -1,4 +1,7 @@
-package edu.utn.proyecto.security;
+package edu.utn.proyecto.infrastructure.config;
+
+import edu.utn.proyecto.security.JwtCookieFilter;
+import edu.utn.proyecto.security.TokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,18 +37,19 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .addFilterBefore(new JwtCookieFilter(tokens.secret()), AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(reg -> reg
-                        // Estáticos y auth públicos
-                        .requestMatchers("/", "/index.html", "/style.css", "/script.js", "/*.js", "/*.css").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/js/**", "/css/**", "/images/**", "/assets/**", "/favicon.ico").permitAll()
+                        .requestMatchers("/", "/index.html").permitAll()
+                        .requestMatchers("/css/**", "/*.css").permitAll()
+                        .requestMatchers("/js/**", "/*.js").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/images/**", "/assets/**", "/static/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-
-                        // Desaparecidos: GET público, POST autenticado
-                        .requestMatchers(HttpMethod.GET, "/api/desaparecidos").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/desaparecidos").authenticated()
-
-                        // Registro de avistadores público (auto-login después)
                         .requestMatchers(HttpMethod.POST, "/api/avistadores").permitAll()
-
+                        .requestMatchers(HttpMethod.GET,  "/api/desaparecidos").permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/avistamientos/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/avistamientos/poligono").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/avistamientos/buscar/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/desaparecidos").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/avistamientos/**").authenticated()
                         .anyRequest().authenticated()
                 );
         return http.build();

@@ -1,6 +1,4 @@
-// AvistadorEntity.java
 package edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities;
-
 import jakarta.persistence.*;
 import java.util.UUID;
 import java.time.LocalDateTime;

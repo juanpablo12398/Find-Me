@@ -1,68 +1,56 @@
-import { API_ENDPOINTS, ERROR_MAPS } from './config/constants.js';
-import { appState } from './config/state.js';
 import { AuthService } from './services/AuthService.js';
-import { DesaparecidoService } from './services/DesaparecidoService.js';
-import { AvistadorService } from './services/AvistadorService.js';
 import { Navigation } from './ui/Navigation.js';
 import { MapManager } from './ui/MapManager.js';
+import { LoginForm } from './ui/forms/LoginForm.js';
+import { DesaparecidoService } from './services/DesaparecidoService.js';
+import { AvistadorService } from './services/AvistadorService.js';
 
-// === Instancias globales ===
-const navigation = new Navigation();
-const mapManager = new MapManager();
+let navigation;
+let mapManager;
 
-/**
- * Inicializa la aplicación
- */
+window.addEventListener('DOMContentLoaded', initApp);
+
 async function initApp() {
   console.log('🚀 Inicializando aplicación...');
 
   // 1) Autenticación primero
   await AuthService.checkAuth();
 
-  // 2) Inicializar navegación
+  // 2) Crear navegación después del DOM
+  navigation = new Navigation();
   navigation.init();
 
-  // 3) Formularios
-  initLoginForm();
-  initDesaparecidosForm();  // mantiene redirección a login + loginMessage sin sesión
-  initAvistadoresForm();
-  initAvistamientoForm();   // modal y envío de avistamientos
-
-  // 4) Eventos custom
+  // 3) Cargar mapa solo cuando el usuario entra a esa sección
   window.addEventListener('loadMapa', () => {
-    if (!appState.map) mapManager.init();
-    mapManager.loadAvistamientos();
+    if (!mapManager) {
+      mapManager = new MapManager();
+      mapManager.init();
+    } else {
+      mapManager.loadAvistamientos();
+    }
   });
 
-  window.addEventListener('loadList', () => {
-    loadList();
-  });
+  // 4) Cargar lista al entrar a lista
+  window.addEventListener('loadList', loadList);
 
-  // 5) Botones/controles del mapa
+  // 5) Formularios
+  new LoginForm(navigation);
+  initDesaparecidosForm();
+  initAvistadoresForm();
+  initAvistamientoForm();
+
+  // 6) Botones auxiliares
   const btnReloadMapa = document.getElementById('btnReloadMapa');
-  if (btnReloadMapa) {
-    btnReloadMapa.onclick = () => mapManager.loadAvistamientos();
-  }
+  if (btnReloadMapa) btnReloadMapa.onclick = () => mapManager && mapManager.loadAvistamientos();
 
-  // 6) Cerrar modal
   const btnCloseModal = document.getElementById('btnCloseModal');
-  if (btnCloseModal) {
-    btnCloseModal.onclick = () => mapManager.closeModal();
-  }
+  if (btnCloseModal) btnCloseModal.onclick = () => mapManager && mapManager.closeModal();
 
-  // 7) Click fuera del modal cierra
   const modal = document.getElementById('modalAvistamiento');
-  if (modal) {
-    modal.onclick = (e) => {
-      if (e.target === modal) mapManager.closeModal();
-    };
-  }
+  if (modal) modal.onclick = (e) => { if (e.target === modal) mapManager && mapManager.closeModal(); };
 
-  // 8) Botón recargar lista
   const btnReload = document.getElementById('btnReload');
-  if (btnReload) {
-    btnReload.onclick = loadList;
-  }
+  if (btnReload) btnReload.onclick = loadList;
 
   console.log('✅ Aplicación inicializada');
 }

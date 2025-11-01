@@ -30,6 +30,8 @@ describe('AvistamientoService', () => {
 
   it('getAvistamientosParaMapa() -> lanza Error si !ok', async () => {
     fetchSpy.mockResolvedValueOnce(errorResponse(500))
+    parseProblemSpy.mockResolvedValueOnce({ status: 500, title: 'Error', detail: 'Falla' })
+    getErrorSpy.mockReturnValueOnce('No se pudo cargar los avistamientos')
 
     await expect(AvistamientoService.getAvistamientosParaMapa())
       .rejects.toThrow('No se pudo cargar los avistamientos')
@@ -53,6 +55,8 @@ describe('AvistamientoService', () => {
 
   it('getAvistamientosEnArea() -> lanza Error si !ok', async () => {
     fetchSpy.mockResolvedValueOnce(errorResponse(400))
+    parseProblemSpy.mockResolvedValueOnce({ status: 400, title: 'Error', detail: 'Falla' })
+    getErrorSpy.mockReturnValueOnce('No se pudieron cargar los avistamientos del área')
 
     await expect(AvistamientoService.getAvistamientosEnArea(1, 2, 3, 4))
       .rejects.toThrow('No se pudieron cargar los avistamientos del área')
@@ -65,10 +69,13 @@ describe('AvistamientoService', () => {
 
     const out = await AvistamientoService.crear(data)
 
-    expect(fetchSpy).toHaveBeenCalledWith(API_ENDPOINTS.AVISTAMIENTOS, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    })
+    expect(fetchSpy).toHaveBeenCalledWith(
+      API_ENDPOINTS.AVISTAMIENTOS,
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(data),
+      })
+    )
     expect(out).toEqual(created)
   })
 

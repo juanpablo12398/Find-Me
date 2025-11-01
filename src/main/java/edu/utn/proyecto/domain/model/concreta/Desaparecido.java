@@ -22,6 +22,9 @@ public class Desaparecido implements IDesaparecido {
         this.foto = foto;
     }
 
+    public Desaparecido() {
+    }
+
     public String getNombre() {
         return nombre;
     }

@@ -32,10 +32,11 @@ class DesaparecidoMapperTest {
         mapper.normalizeRequestInPlace(req);
         Desaparecido d = mapper.fromRequestToDomain(req);
 
-        assertThat(d.getNombre()).isEqualTo("ANA");            // upperNoAccents
-        assertThat(d.getApellido()).isEqualTo("PEREZ");        // upperNoAccents
-        assertThat(d.getDni()).isEqualTo("12345678");          // digits only
-        assertThat(d.getFoto()).isEqualTo("http://foto");      // trim + optional
+        // ⬇️ Ajustado a Title Case (no UPPERCASE)
+        assertThat(d.getNombre()).isEqualTo("Ana");                 // title case, sin acentos
+        assertThat(d.getApellido()).isEqualTo("Perez");             // title case, sin acentos
+        assertThat(d.getDni()).isEqualTo("12345678");               // sólo dígitos
+        assertThat(d.getFoto()).isEqualTo("http://foto");           // trim/normalize
         assertThat(d.getDescripcion()).isEqualTo("Texto de descripcion"); // trim
     }
 
@@ -51,8 +52,8 @@ class DesaparecidoMapperTest {
 
         var out = mapper.fromRequestToDomain(reqs);
         assertThat(out).hasSize(2);
-        assertThat(out.get(0).getNombre()).isEqualTo("A");
-        assertThat(out.get(0).getDni()).isEqualTo("11");
+        assertThat(out.get(0).getNombre()).isEqualTo("A");  // ya venía normalizado
+        assertThat(out.get(0).getDni()).isEqualTo("11");    // "1.1" -> "11"
         assertThat(out.get(1).getDni()).isEqualTo("2");
     }
 

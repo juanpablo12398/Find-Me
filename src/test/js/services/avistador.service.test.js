@@ -41,10 +41,7 @@ describe('AvistadorService', () => {
 
     await expect(AvistadorService.crear(data)).rejects.toThrow('Mensaje bonito')
     expect(getErrorSpy).toHaveBeenCalledWith(
-      ERROR_MAPS.AVISTADOR,
-      problem.status,
-      problem.key,
-      problem.detail
+      ERROR_MAPS.AVISTADOR, problem.status, problem.key, problem.detail
     )
   })
 })

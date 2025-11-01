@@ -1,182 +1,140 @@
-import { appState } from '../config/state.js';
+// Navigation.js
 import { AuthService } from '../services/AuthService.js';
 
-/**
- * Gestor de navegación SPA
- */
 export class Navigation {
-
   constructor() {
+    // Secciones
     this.sections = {
-      login: document.getElementById("loginSection"),
-      avistador: document.getElementById("avistadorSection"),
-      form: document.getElementById("formSection"),
-      list: document.getElementById("listSection"),
-      mapa: document.getElementById("mapaSection")
+      login:      document.getElementById('loginSection'),
+      avistador:  document.getElementById('avistadorSection'),
+      form:       document.getElementById('formSection'),
+      list:       document.getElementById('listSection'),
+      mapa:       document.getElementById('mapaSection'),
     };
 
+    // Botones
     this.buttons = {
-      navForm: document.getElementById("btnNavForm"),
-      navList: document.getElementById("btnNavList"),
-      navAvistador: document.getElementById("btnNavAvistador"),
-      navMapa: document.getElementById("btnNavMapa"),
-      login: document.getElementById("btnLogin"),
-      logout: document.getElementById("btnLogout"),
-      goRegister: document.getElementById("btnGoRegister")
+      navForm:       document.getElementById('btnNavForm'),
+      navList:       document.getElementById('btnNavList'),
+      navAvistador:  document.getElementById('btnNavAvistador'), // “Registrarme”
+      navMapa:       document.getElementById('btnNavMapa'),
+      login:         document.getElementById('btnLogin'),
+      logout:        document.getElementById('btnLogout'),
+      goRegister:    document.getElementById('btnGoRegister'),
     };
 
-    this.sessionStatus = document.getElementById("sessionStatus");
+    this.sessionStatus = document.getElementById('sessionStatus');
   }
 
-  /**
-   * Inicializa los event listeners de navegación
-   */
   init() {
     this._initNavButtons();
     this._initAuthButtons();
-    this._subscribeToAuth();
-    // Pintar estado actual por si ya hay usuario cargado (cookie válida)
-    this._updateUIForAuth(AuthService.getCurrentUser());
-  }
 
-  /**
-   * Cambia a una sección específica
-   * @param {string} targetSection - Nombre de la sección (login, form, list, mapa, avistador)
-   */
-  navigateTo(targetSection) {
-    // ✨ AQUÍ VA hideAllSections() integrado
-    this._hideAllSections();
+    // Reaccionar a login/logout/checkAuth
+    window.addEventListener('auth:changed', (e) => {
+      this._updateAuthUI(e.detail?.user || null);
+    });
 
-    // Mostrar la sección objetivo
-    const section = this.sections[targetSection];
-    if (section) {
-      section.classList.add('section--active');
-    }
-  }
-
-  /**
-   * Oculta todas las secciones (método privado)
-   * @private
-   */
-  _hideAllSections() {
-    Object.values(this.sections).forEach(section => {
-      if (section) {
-        section.classList.remove('section--active');
-      }
+    // Pintado inicial (por si ya hay cookie válida).
+    // Si en el boot ya llamás a AuthService.checkAuth(), no hace falta repetirlo.
+    AuthService.checkAuth().finally(() => {
+      this._updateAuthUI(AuthService.getCurrentUser());
     });
   }
 
-  /**
-   * Inicializa botones de navegación
-   * @private
-   */
+  // ===== Navegación =====
+  navigateTo(target) {
+    this._hideAllSections();
+    const section = this.sections[target];
+    if (section) section.classList.add('section--active');
+  }
+
+  _hideAllSections() {
+    Object.values(this.sections).forEach(s => s && s.classList.remove('section--active'));
+  }
+
   _initNavButtons() {
-    if (this.buttons.navForm) {
-      this.buttons.navForm.onclick = async () => {
-        if (!AuthService.getCurrentUser()) {
-          if (this.sections.login) {
-            this.navigateTo('login');
-            const lm = document.getElementById("loginMessage");
-            if (lm) lm.textContent = "Para registrar un desaparecido debés iniciar sesión o registrarte.";
-          } else {
-            alert("Para registrar un desaparecido debés iniciar sesión.");
-          }
+    const B = this.buttons;
+
+    if (B.navForm) {
+      B.navForm.onclick = () => {
+        if (!AuthService.isAuthenticated()) {
+          this.navigateTo('login');
+          const lm = document.getElementById('loginMessage');
+          if (lm) lm.textContent = 'Para registrar un desaparecido debés iniciar sesión o registrarte.';
           return;
         }
         this.navigateTo('form');
       };
     }
 
-    if (this.buttons.navList) {
-      this.buttons.navList.onclick = () => {
+    if (B.navList) {
+      B.navList.onclick = () => {
         this.navigateTo('list');
-        // Disparar evento custom para cargar la lista
         window.dispatchEvent(new CustomEvent('loadList'));
       };
     }
 
-    if (this.buttons.navAvistador) {
-      this.buttons.navAvistador.onclick = () => {
-        this.navigateTo('avistador');
-      };
+    if (B.navAvistador) {
+      B.navAvistador.onclick = () => this.navigateTo('avistador');
     }
 
-    if (this.buttons.navMapa) {
-      this.buttons.navMapa.onclick = () => {
+    if (B.navMapa) {
+      B.navMapa.onclick = () => {
         this.navigateTo('mapa');
-        // Disparar evento custom para inicializar el mapa
         window.dispatchEvent(new CustomEvent('loadMapa'));
       };
     }
   }
 
-  /**
-   * Inicializa botones de autenticación
-   * @private
-   */
   _initAuthButtons() {
-    if (this.buttons.login) {
-      this.buttons.login.onclick = () => {
+    const B = this.buttons;
+
+    if (B.login) {
+      B.login.onclick = () => {
         this.navigateTo('login');
-        const lr = document.getElementById("loginResult");
-        if (lr) lr.textContent = "";
-        const lm = document.getElementById("loginMessage");
-        if (lm) lm.textContent = "";
+        const lr = document.getElementById('loginResult');  if (lr) lr.textContent = '';
+        const lm = document.getElementById('loginMessage'); if (lm) lm.textContent = '';
       };
     }
 
-    if (this.buttons.logout) {
-      this.buttons.logout.onclick = async () => {
+    if (B.logout) {
+      B.logout.onclick = async () => {
         await AuthService.logout();
-        this.navigateTo('avistador');
+        this.navigateTo('avistador'); // o 'mapa', a gusto
       };
     }
 
-    if (this.buttons.goRegister) {
-      this.buttons.goRegister.onclick = () => {
-        this.navigateTo('avistador');
-      };
+    if (B.goRegister) {
+      B.goRegister.onclick = () => this.navigateTo('avistador');
     }
   }
 
-  /**
-   * Suscribirse a cambios en autenticación
-   * @private
-   */
-  _subscribeToAuth() {
-    appState.subscribe((type, data) => {
-      if (type === 'user') {
-        this._updateUIForAuth(data);
-      }
-    });
+  // ===== UI según autenticación =====
+  _updateAuthUI(user) {
+    const isLogged = !!user;
+
+    // Estado de sesión
+    if (this.sessionStatus) {
+      this.sessionStatus.textContent = isLogged
+        ? `Sesión iniciada: ${(user.nombre || user.dni || '')}${user.email ? ` · ${user.email}` : ''}`
+        : 'No has iniciado sesión.';
+    }
+
+    // Mostrar/ocultar botones de Auth
+    this._toggle(this.buttons.login,  !isLogged);
+    this._toggle(this.buttons.logout,  isLogged);
+
+    // Ocultar “Registrarme” cuando hay sesión
+    this._toggle(this.buttons.navAvistador, !isLogged);
+
+    // (Opcional) ocultar la sección completa de registro si hay sesión:
+    // this._toggle(this.sections.avistador, !isLogged);
   }
 
-  /**
-   * Actualiza la UI según el estado de autenticación
-   * @private
-   */
-  _updateUIForAuth(user) {
-    if (user) {
-      const label = user.nombre || user.dni || "";
-      if (this.sessionStatus) {
-        this.sessionStatus.textContent = `Sesión iniciada: ${label} · ${user.email || ""}`;
-      }
-      if (this.buttons.logout) {
-        this.buttons.logout.classList.remove('u-hidden');
-        this.buttons.logout.style.display = "inline-block";
-      }
-      if (this.buttons.login) {
-        this.buttons.login.style.display = "none";
-      }
-    } else {
-      if (this.sessionStatus) this.sessionStatus.textContent = "No has iniciado sesión.";
-      if (this.buttons.logout) {
-        this.buttons.logout.classList.add('u-hidden');
-        this.buttons.logout.style.display = "none";
-      }
-      if (this.buttons.login) {
-        this.buttons.login.style.display = "inline-block";
-      }
-    }
+  _toggle(el, show) {
+    if (!el) return;
+    el.classList.toggle('u-hidden', !show);
+    el.style.display = show ? 'inline-block' : 'none';
   }
 }

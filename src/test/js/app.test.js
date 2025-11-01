@@ -188,7 +188,7 @@ afterEach(() => {
 })
 
 // ---------- IMPORT del SUT ----------
-import '@app/app-auth.js'
+import '@app/app.js'
 
 // helper: disparamos DOMContentLoaded para que corra initApp()
 async function fireDOMContentLoaded() {

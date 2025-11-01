@@ -51,11 +51,39 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Tests -->
+		<!-- POSTGIS -->
+		<!-- Hibernate Spatial para soporte PostGIS -->
+		<dependency>
+			<groupId>org.hibernate.orm</groupId>
+			<artifactId>hibernate-spatial</artifactId>
+			<version>6.4.4.Final</version>
+		</dependency>
+
+		<!-- JTS Topology Suite (geometrías espaciales) -->
+		<dependency>
+			<groupId>org.locationtech.jts</groupId>
+			<artifactId>jts-core</artifactId>
+			<version>1.19.0</version>
+		</dependency>
+
+		<!-- PostGIS JDBC Driver -->
+		<dependency>
+			<groupId>net.postgis</groupId>
+			<artifactId>postgis-jdbc</artifactId>
+			<version>2023.1.0</version>
+		</dependency>
+
+		<!-- Jackson Datatype JTS (serialización JSON de geometrías) -->
+		<dependency>
+			<groupId>com.bedatadriven</groupId>
+			<artifactId>jackson-datatype-jts</artifactId>
+			<version>2.4</version>
+		</dependency>
+
+		<!-- Security -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
 		<!-- JWT -->
@@ -77,53 +105,60 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Security -->
+		<!-- Lombok -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- Tests -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<!-- ======= FIN DEPENDENCIAS ======= -->
 
 	<build>
-		<!-- Resources -->
+		<!-- ======= RESOURCES ======= -->
 		<resources>
-			<!-- 1) Solo properties/yml con filtering -->
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-				<includes>
-					<include>**/*.properties</include>
-					<include>**/*.yml</include>
-				</includes>
-				<!-- No filtremos los estáticos -->
-				<excludes>
-					<exclude>static/**</exclude>
-					<exclude>public/**</exclude>
-					<exclude>templates/**</exclude>
-				</excludes>
-			</resource>
-
-			<!-- 2) Estático sin filtering -->
+			<!-- 1) No filtrar .properties ni estáticos (evita MalformedInputException) -->
 			<resource>
 				<directory>src/main/resources</directory>
 				<filtering>false</filtering>
 				<includes>
+					<!-- Config y mensajes sin filtrar -->
+					<include>**/*.properties</include>
+					<include>**/*.json</include>
+
+					<!-- Estáticos -->
 					<include>static/**</include>
 					<include>public/**</include>
 					<include>templates/**</include>
-					<!-- por si tienes assets sueltos -->
 					<include>**/*.html</include>
 					<include>**/*.css</include>
 					<include>**/*.js</include>
 					<include>**/*.png</include>
 					<include>**/*.jpg</include>
+					<include>**/*.jpeg</include>
+					<include>**/*.webp</include>
 					<include>**/*.svg</include>
+				</includes>
+			</resource>
+
+			<!-- 2) Solo filtrar application*.yml/yaml si necesitás variables Maven -->
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>application*.yml</include>
+					<include>application*.yaml</include>
 				</includes>
 			</resource>
 		</resources>
 
-		<!-- (Opcional) testResources sin filtering -->
 		<testResources>
 			<testResource>
 				<directory>src/test/resources</directory>
@@ -158,13 +193,16 @@
 				</configuration>
 			</plugin>
 
-			<!-- Resources (forzamos encoding UTF-8) -->
+			<!-- Resources (forzar UTF-8 y no filtrar .properties por si acaso) -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>3.3.1</version>
 				<configuration>
 					<encoding>UTF-8</encoding>
+					<nonFilteredFileExtensions>
+						<nonFilteredFileExtension>properties</nonFilteredFileExtension>
+					</nonFilteredFileExtensions>
 				</configuration>
 			</plugin>
 
@@ -174,14 +212,12 @@
 				<artifactId>jacoco-maven-plugin</artifactId>
 				<version>0.8.12</version>
 				<executions>
-					<!-- Inyecta el agente antes de los tests -->
 					<execution>
 						<id>prepare-agent</id>
 						<goals>
 							<goal>prepare-agent</goal>
 						</goals>
 					</execution>
-					<!-- Genera el reporte HTML después de test -->
 					<execution>
 						<id>report</id>
 						<phase>test</phase>

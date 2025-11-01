@@ -3,9 +3,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find Me – SPA Básica</title>
+    <title>Find Me – Sistema de Avistamientos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css" />
+
+    <!-- ✨ CSS MODULAR -->
+    <link rel="stylesheet" href="css/header.css" />
+    <link rel="stylesheet" href="css/navigation.css" />
+    <link rel="stylesheet" href="css/modular.css" />
+    <link rel="stylesheet" href="css/forms.css" />
+    <link rel="stylesheet" href="css/login.css" />
 
     <!-- ✨ Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -14,153 +20,272 @@
 </head>
 <body>
 
-<h1>Find Me</h1>
+<!-- ============================================ -->
+<!-- HEADER PROFESIONAL CON NAVEGACIÓN -->
+<!-- ============================================ -->
+<header class="app-header">
+    <!-- Logo / Brand -->
+    <h1>Find Me</h1>
 
-<!-- Navegación -->
-<nav class="nav">
-    <button class="nav__button" id="btnNavAvistador">Registrarme</button>
-    <button class="nav__button" id="btnNavForm">Registrar desaparecido</button>
-    <button class="nav__button" id="btnNavList">Ver lista</button>
-    <button class="nav__button" id="btnNavMapa">🗺️ Mapa</button>
-    <span style="flex:1"></span>
-    <button class="nav__button" id="btnLogin">Iniciar sesión</button>
-    <button class="nav__button u-hidden" id="btnLogout">Cerrar sesión</button>
-</nav>
+    <!-- Navegación Principal -->
+    <nav class="nav">
+        <button class="nav__button" id="btnNavAvistador">Registrarme</button>
+        <button class="nav__button" id="btnNavForm">Registrar desaparecido</button>
+        <button class="nav__button" id="btnNavList">Ver lista</button>
+        <button class="nav__button" id="btnNavMapa">🗺️ Mapa</button>
+        <button class="nav__button" id="btnLogin">Iniciar sesión</button>
+        <button class="nav__button u-hidden" id="btnLogout">Cerrar sesión</button>
+    </nav>
 
-<div class="session-status" id="sessionStatus"></div>
+    <!-- Estado de sesión -->
+    <div class="session-status u-hidden" id="sessionStatus"></div>
+</header>
 
 <!-- ============================================ -->
-<!-- SECCIÓN: LOGIN -->
+<!-- CONTENEDOR PRINCIPAL -->
 <!-- ============================================ -->
-<section class="section" id="loginSection">
-    <h2>Iniciar Sesión</h2>
-    <div class="u-text-muted u-mb-2" id="loginMessage"></div>
+<div class="main-container">
 
-    <form id="formLogin" novalidate>
-        <input
-                class="form__input"
-                type="text"
-                id="login_dni"
-                placeholder="DNI (7 a 10 dígitos)"
-                pattern="[0-9]{7,10}"
-                inputmode="numeric"
-                maxlength="10"
-                required
-        />
-        <input
-                class="form__input"
-                type="email"
-                id="login_email"
-                placeholder="Email registrado"
-                required
-        />
-        <button class="button button--primary" type="submit" id="btnLoginSubmit">
-            Iniciar Sesión
+    <!-- ============================================ -->
+    <!-- SECCIÓN: LOGIN -->
+    <!-- ============================================ -->
+    <section class="section" id="loginSection">
+        <h2>Iniciar Sesión</h2>
+        <div class="u-text-muted u-mb-2" id="loginMessage"></div>
+
+        <form id="formLogin" novalidate>
+            <input
+                    class="form__input"
+                    type="text"
+                    id="login_dni"
+                    placeholder="DNI (7 a 10 dígitos)"
+                    pattern="[0-9]{7,10}"
+                    inputmode="numeric"
+                    maxlength="10"
+                    required
+            />
+            <input
+                    class="form__input"
+                    type="email"
+                    id="login_email"
+                    placeholder="Email registrado"
+                    required
+            />
+            <button class="button button--primary" type="submit" id="btnLoginSubmit">
+                Iniciar Sesión
+            </button>
+        </form>
+
+        <div class="form__message" id="loginResult"></div>
+
+        <div class="divider">— o —</div>
+
+        <button type="button" class="button button--secondary" id="btnGoRegister">
+            No tengo cuenta, quiero registrarme
         </button>
-    </form>
+    </section>
 
-    <div class="form__message" id="loginResult"></div>
+    <!-- ============================================ -->
+    <!-- SECCIÓN: REGISTRAR AVISTADOR -->
+    <!-- ============================================ -->
+    <section class="section" id="avistadorSection">
+        <h2>Crear mi cuenta (Avistador)</h2>
+        <form id="formAvistador" novalidate>
+            <div class="form__row">
+                <input class="form__input" type="text" id="a_nombre" placeholder="Nombre" required />
+                <input class="form__input" type="text" id="a_apellido" placeholder="Apellido" required />
+            </div>
+            <div class="form__row">
+                <input class="form__input" type="text" id="a_dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required />
+                <input class="form__input" type="number" id="a_edad" placeholder="Edad" min="0" required />
+            </div>
+            <input class="form__input" type="text" id="a_direccion" placeholder="Dirección" required />
+            <div class="form__row">
+                <input class="form__input" type="email" id="a_email" placeholder="Email (importante para login)" required />
+                <input class="form__input" type="tel" id="a_telefono" placeholder="Teléfono (opcional)" />
+            </div>
+            <button class="button button--primary" type="submit" id="btnAvistador">
+                Registrarme
+            </button>
+        </form>
+        <div class="form__message" id="outAvistador"></div>
+    </section>
 
-    <div class="divider">— o —</div>
+    <!-- ============================================ -->
+    <!-- SECCIÓN: REGISTRAR DESAPARECIDO -->
+    <!-- ============================================ -->
+    <section class="section section--active" id="formSection">
+        <h2>Registrar Persona Desaparecida</h2>
+        <form id="formDesaparecido" novalidate>
+            <div class="form__row">
+                <input class="form__input" type="text" id="nombre" placeholder="Nombre" required />
+                <input class="form__input" type="text" id="apellido" placeholder="Apellido" required />
+            </div>
+            <div class="form__row">
+                <input class="form__input" type="number" id="edad" placeholder="Edad" min="0" required />
+                <input class="form__input" type="text" id="dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required/>
+            </div>
+            <textarea class="form__textarea" id="descripcion" placeholder="Descripción" required></textarea>
+            <input class="form__input" type="url" id="fotoUrl" placeholder="URL de la Foto (opcional)" />
+            <button class="button button--primary" type="submit" id="btnSubmit">
+                Enviar
+            </button>
+        </form>
+        <div class="form__message" id="resultado"></div>
+    </section>
 
-    <button type="button" class="button button--secondary" id="btnGoRegister">
-        No tengo cuenta, quiero registrarme
-    </button>
-</section>
-
-<!-- ============================================ -->
-<!-- SECCIÓN: REGISTRAR AVISTADOR -->
-<!-- ============================================ -->
-<section class="section" id="avistadorSection">
-    <h2>Crear mi cuenta (Avistador)</h2>
-    <form id="formAvistador" novalidate>
-        <div class="form__row">
-            <input class="form__input" type="text" id="a_nombre" placeholder="Nombre" required />
-            <input class="form__input" type="text" id="a_apellido" placeholder="Apellido" required />
-        </div>
-        <div class="form__row">
-            <input class="form__input" type="text" id="a_dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required />
-            <input class="form__input" type="number" id="a_edad" placeholder="Edad" min="0" required />
-        </div>
-        <input class="form__input" type="text" id="a_direccion" placeholder="Dirección" required />
-        <div class="form__row">
-            <input class="form__input" type="email" id="a_email" placeholder="Email (importante para login)" required />
-            <input class="form__input" type="tel" id="a_telefono" placeholder="Teléfono (opcional)" />
-        </div>
-        <button class="button button--primary" type="submit" id="btnAvistador">
-            Registrarme
+    <!-- ============================================ -->
+    <!-- SECCIÓN: LISTA DE DESAPARECIDOS -->
+    <!-- ============================================ -->
+    <section class="section" id="listSection">
+        <h2>Lista de Desaparecidos</h2>
+        <button class="button button--secondary u-mb-2" id="btnReload">
+            ↻ Recargar lista
         </button>
-    </form>
-    <div class="form__message" id="outAvistador"></div>
-</section>
+        <div class="u-text-muted" id="listaEstado"></div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th class="table__header table__cell">Nombre</th>
+                <th class="table__header table__cell">Apellido</th>
+                <th class="table__header table__cell">DNI</th>
+                <th class="table__header table__cell">Descripción</th>
+                <th class="table__header table__cell">Foto</th>
+                <th class="table__header table__cell">Fecha</th>
+            </tr>
+            </thead>
+            <tbody id="tablaDesaparecidosBody"></tbody>
+        </table>
+    </section>
 
-<!-- ============================================ -->
-<!-- SECCIÓN: REGISTRAR DESAPARECIDO -->
-<!-- ============================================ -->
-<section class="section section--active" id="formSection">
-    <h2>Registrar Persona Desaparecida</h2>
-    <form id="formDesaparecido" novalidate>
-        <div class="form__row">
-            <input class="form__input" type="text" id="nombre" placeholder="Nombre" required />
-            <input class="form__input" type="text" id="apellido" placeholder="Apellido" required />
+    <!-- ============================================ -->
+    <!-- SECCIÓN: MAPA DE AVISTAMIENTOS CON FILTROS -->
+    <!-- ============================================ -->
+    <section class="section" id="mapaSection">
+        <h2>Mapa de Avistamientos</h2>
+
+        <div class="map__controls">
+            <button class="button button--secondary" id="btnReloadMapa">
+                🔄 Actualizar Mapa
+            </button>
+            <button class="button button--primary" id="btnToggleReportar">
+                📍 Activar Modo Reportar
+            </button>
         </div>
-        <div class="form__row">
-            <input class="form__input" type="number" id="edad" placeholder="Edad" min="0" required />
-            <input class="form__input" type="text" id="dni" placeholder="DNI (7 a 10 dígitos)" pattern="[0-9]{7,10}" inputmode="numeric" maxlength="10" required/>
+
+        <div class="map__status" id="mapaEstado"></div>
+
+        <!-- Contenedor del mapa con sidebar -->
+        <div class="mapa-container">
+            <!-- Sidebar de Filtros -->
+            <aside class="sidebar" id="sidebarFiltros">
+                <!-- Header -->
+                <div class="sidebar__header">
+                    <h3 class="sidebar__title">Filtros</h3>
+                    <button class="sidebar__toggle" id="btnToggleSidebar">×</button>
+                </div>
+
+                <div class="sidebar__content">
+                    <!-- Contador de resultados -->
+                    <div class="results-counter">
+                        <span class="counter-number" id="counterNumber">0</span>
+                        <span class="counter-label" id="counterLabel">avistamientos encontrados</span>
+                    </div>
+
+                    <!-- Lista de filtros -->
+                    <div class="filtros-list">
+                        <!-- Filtro: Todos -->
+                        <div class="filtro-item filtro-item--active" id="filtroTodos">
+                            <div class="filtro-header">
+                                <div class="filtro-icon-title">
+                                    <div class="filtro-icon">🗺️</div>
+                                    <div class="filtro-content">
+                                        <h4 class="filtro-title">Todos los avistamientos</h4>
+                                        <p class="filtro-description">Ver todos en el mapa</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtro: Por Radio -->
+                        <div class="filtro-item" id="filtroRadio">
+                            <div class="filtro-header">
+                                <div class="filtro-icon-title">
+                                    <div class="filtro-icon">📍</div>
+                                    <div class="filtro-content">
+                                        <h4 class="filtro-title">Buscar por radio</h4>
+                                        <p class="filtro-description">Desde un punto específico</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Controles del radio -->
+                            <div class="filtro-controls u-hidden" id="radioControls">
+                                <label class="radio-label">
+                                    Radio: <span class="radio-value" id="radioValue">5 km</span>
+                                </label>
+                                <input type="range" class="radio-slider" id="radioSlider" min="1" max="50" value="5" />
+                                <button class="btn-cambiar-punto" id="btnCambiarPuntoRadio">📍 Cambiar punto</button>
+                            </div>
+                        </div>
+
+                        <!-- Filtro: Por Área -->
+                        <div class="filtro-item" id="filtroArea">
+                            <div class="filtro-header">
+                                <div class="filtro-icon-title">
+                                    <div class="filtro-icon">▢</div>
+                                    <div class="filtro-content">
+                                        <h4 class="filtro-title">Buscar por área</h4>
+                                        <p class="filtro-description">Dibuja un rectángulo</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtro: Por Polígono -->
+                        <div class="filtro-item" id="filtroPoligono">
+                            <div class="filtro-header">
+                                <div class="filtro-icon-title">
+                                    <div class="filtro-icon">⬡</div>
+                                    <div class="filtro-content">
+                                        <h4 class="filtro-title">Buscar por polígono</h4>
+                                        <p class="filtro-description">Área personalizada</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtro: Por Desaparecido -->
+                        <div class="filtro-item" id="filtroDesaparecido">
+                            <div class="filtro-header">
+                                <div class="filtro-icon-title">
+                                    <div class="filtro-icon">👤</div>
+                                    <div class="filtro-content">
+                                        <h4 class="filtro-title">Por persona</h4>
+                                        <p class="filtro-description">Filtrar por desaparecido</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="filtro-controls">
+                                <select class="desaparecido-select" id="filtroDesaparecidoSelect">
+                                    <option value="">Selecciona una persona</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botón Reset -->
+                    <button class="btn-reset u-hidden" id="btnResetFiltros">🔄 Limpiar filtros</button>
+                </div>
+            </aside>
+
+            <!-- Mapa -->
+            <div class="map-wrapper">
+                <div class="map" id="map"></div>
+            </div>
         </div>
-        <textarea class="form__textarea" id="descripcion" placeholder="Descripción" required></textarea>
-        <input class="form__input" type="url" id="fotoUrl" placeholder="URL de la Foto (opcional)" />
-        <button class="button button--primary" type="submit" id="btnSubmit">
-            Enviar
-        </button>
-    </form>
-    <div class="form__message" id="resultado"></div>
-</section>
+    </section>
 
-<!-- ============================================ -->
-<!-- SECCIÓN: LISTA DE DESAPARECIDOS -->
-<!-- ============================================ -->
-<section class="section" id="listSection">
-    <h2>Lista de Desaparecidos</h2>
-    <button class="button button--secondary u-mb-2" id="btnReload">
-        ↻ Recargar lista
-    </button>
-    <div class="u-text-muted" id="listaEstado"></div>
-    <table class="table">
-        <thead>
-        <tr>
-            <th class="table__header table__cell">Nombre</th>
-            <th class="table__header table__cell">Apellido</th>
-            <th class="table__header table__cell">DNI</th>
-            <th class="table__header table__cell">Descripción</th>
-            <th class="table__header table__cell">Foto</th>
-            <th class="table__header table__cell">Fecha</th>
-        </tr>
-        </thead>
-        <tbody id="tablaDesaparecidosBody"></tbody>
-    </table>
-</section>
-
-<!-- ============================================ -->
-<!-- SECCIÓN: MAPA DE AVISTAMIENTOS -->
-<!-- ============================================ -->
-<section class="section" id="mapaSection">
-    <h2>Mapa de Avistamientos</h2>
-
-    <div class="map__controls">
-        <button class="button button--secondary" id="btnReloadMapa">
-            🔄 Actualizar Mapa
-        </button>
-        <button class="button button--primary" id="btnToggleReportar">
-            📍 Activar Modo Reportar
-        </button>
-    </div>
-
-    <div class="map__status" id="mapaEstado"></div>
-
-    <!-- Contenedor del mapa -->
-    <div class="map" id="map"></div>
-</section>
+</div> <!-- fin main-container -->
 
 <!-- ============================================ -->
 <!-- MODAL: REPORTAR AVISTAMIENTO -->
@@ -223,7 +348,7 @@
         crossorigin=""></script>
 
 <!-- Tu script -->
-<script type="module" src="js/app-auth.js"></script>
+<script type="module" src="js/app.js"></script>
 
 </body>
 </html>

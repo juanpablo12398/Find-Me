@@ -108,6 +108,45 @@ public class AvistamientoService {
     }
 
     // ============================================
+    // NUEVOS MÉTODOS CON POSTGIS
+    // ============================================
+    @Transactional(readOnly = true)
+    public List<AvistamientoFrontDTO> obtenerEnRadio(
+            Double lat, Double lng, Double radioKm) {
+        return enrichAvistamientos(
+                repoAvistamientos.findWithinRadius(lat, lng, radioKm)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<AvistamientoFrontDTO> obtenerEnPoligono(String polygonWKT) {
+        return enrichAvistamientos(
+                repoAvistamientos.findInPolygon(polygonWKT)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<AvistamientoFrontDTO> obtenerMasCercanos(
+            Double lat, Double lng, Integer limite) {
+        return enrichAvistamientos(
+                repoAvistamientos.findNearestN(lat, lng, limite)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public List<AvistamientoFrontDTO> obtenerPorDesaparecidoEnRadio(
+            UUID desaparecidoId, Double lat, Double lng, Double radioKm) {
+        return enrichAvistamientos(
+                repoAvistamientos.findByDesaparecidoWithinRadius(desaparecidoId, lat, lng, radioKm)
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public Long contarEnArea(Double latMin, Double latMax, Double lngMin, Double lngMax) {
+        return repoAvistamientos.countInBounds(latMin, latMax, lngMin, lngMax);
+    }
+
+    // ============================================
     // MÉTODO PRIVADO: Enriquecer avistamientos
     // (reutilizable para todos los casos)
     // ============================================

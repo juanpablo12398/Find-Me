@@ -30,6 +30,9 @@ describe('DesaparecidoService', () => {
 
   it('obtenerTodos() -> lanza Error si !ok', async () => {
     fetchSpy.mockResolvedValueOnce(errorResponse(500))
+    parseProblemSpy.mockResolvedValueOnce({ status: 500, title: 'Error', detail: 'Falla' })
+    getErrorSpy.mockReturnValueOnce('No se pudo cargar la lista')
+
     await expect(DesaparecidoService.obtenerTodos())
       .rejects.toThrow('No se pudo cargar la lista')
   })
@@ -57,8 +60,7 @@ describe('DesaparecidoService', () => {
 
     await expect(DesaparecidoService.crear(data)).rejects.toThrow('Error desaparecido')
     expect(getErrorSpy).toHaveBeenCalledWith(
-      ERROR_MAPS.DESAPARECIDO,
-      problem.status, problem.key, problem.detail
+      ERROR_MAPS.DESAPARECIDO, problem.status, problem.key, problem.detail
     )
   })
 })

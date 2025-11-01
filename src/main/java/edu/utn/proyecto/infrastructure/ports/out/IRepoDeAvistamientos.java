@@ -15,4 +15,9 @@ public interface IRepoDeAvistamientos {
     List<Avistamiento> findInBounds(Double latMin, Double latMax, Double lngMin, Double lngMax);
     List<Avistamiento> findRecientes(LocalDateTime desde);
     void deleteById(UUID id);
+    List<Avistamiento> findWithinRadius(Double lat, Double lng, Double radioKm);
+    List<Avistamiento> findInPolygon(String polygonWKT);
+    List<Avistamiento> findNearestN(Double lat, Double lng, Integer limite);
+    List<Avistamiento> findByDesaparecidoWithinRadius(UUID desaparecidoId, Double lat, Double lng, Double radioKm);
+    Long countInBounds(Double latMin, Double latMax, Double lngMin, Double lngMax);
 }

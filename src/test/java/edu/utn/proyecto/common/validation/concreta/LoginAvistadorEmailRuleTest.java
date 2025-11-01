@@ -1,3 +1,4 @@
+package edu.utn.proyecto.common.validation.concreta;
 import edu.utn.proyecto.auth.exception.AuthError;
 import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.concreta.login.rules.LoginEmailMatchRule;
@@ -9,9 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.Optional;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 

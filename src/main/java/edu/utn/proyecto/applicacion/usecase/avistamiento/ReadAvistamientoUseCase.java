@@ -1,7 +1,6 @@
 package edu.utn.proyecto.applicacion.usecase.avistamiento;
 import edu.utn.proyecto.applicacion.dtos.AvistamientoResponseDTO;
 import edu.utn.proyecto.domain.service.AvistamientoService;
-import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoFrontDTO;
 import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
@@ -23,22 +22,12 @@ public class ReadAvistamientoUseCase {
         return service.obtenerAvistamientosRecientes(dias);
     }
 
-    public List<AvistamientoFrontDTO> obtenerParaMapa() {
-        return service.obtenerParaMapa();
+    public List<AvistamientoResponseDTO> obtenerPorDesaparecido(UUID desaparecidoId) {
+        return service.obtenerPorDesaparecido(desaparecidoId);
     }
 
-    public List<AvistamientoFrontDTO> obtenerPorDesaparecido(UUID desaparecidoId) {
-        return service.obtenerPorDesaparecidoEnriquecido(desaparecidoId);
+    public List<AvistamientoResponseDTO> obtenerEnArea(
+            Double latMin, Double latMax, Double lngMin, Double lngMax) {
+        return service.obtenerEnArea(latMin, latMax, lngMin, lngMax);
     }
-
-    public List<AvistamientoFrontDTO> obtenerEnArea(
-            Double latMin, Double latMax,
-            Double lngMin, Double lngMax) {
-        return service.obtenerEnAreaEnriquecido(latMin, latMax, lngMin, lngMax);
-    }
-
-    public List<AvistamientoFrontDTO> obtenerRecientesEnriquecido(int dias) {
-        return service.obtenerRecientesEnriquecido(dias);
-    }
-
 }
