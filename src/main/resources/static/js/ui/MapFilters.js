@@ -130,31 +130,29 @@ export class MapFilters {
   }
 
   _setupSidebarToggle() {
-    const btnClose = document.getElementById('btnToggleSidebar');
-    const btnOpen  = document.getElementById('btnSidebarOpen');
-    const sidebar  = document.getElementById('sidebarFiltros');
+    const sidebar = document.getElementById('sidebarFiltros');
+    const btn     = document.getElementById('btnToggleFilters');
+    if (!sidebar || !btn) return;
 
-    const syncUI = () => {
-      const closed = sidebar.classList.contains('sidebar--closed');
-      if (btnClose) btnClose.textContent = closed ? '›' : '×';
-      if (btnOpen)  btnOpen.classList.toggle('u-hidden', !closed);
+    const applyState = (open) => {
+      sidebar.classList.toggle('sidebar--closed', !open);
+      btn.setAttribute('aria-expanded', String(open));
+      // Texto del botón (podés dejar solo “Filtros” si preferís)
+      btn.innerHTML = open ? '🧰 Ocultar filtros' : '🧰 Filtros';
+
+      // Recalcular Leaflet después de la transición
+      setTimeout(() => { if (appState.map) appState.map.invalidateSize(); }, 220);
     };
 
-    if (btnClose && sidebar) {
-      btnClose.addEventListener('click', () => {
-        sidebar.classList.toggle('sidebar--closed');
-        syncUI();
-      });
-    }
+    // Estado inicial (si está cerrado por CSS, respétalo)
+    const startsOpen = !sidebar.classList.contains('sidebar--closed');
+    applyState(startsOpen);
 
-    if (btnOpen && sidebar) {
-      btnOpen.addEventListener('click', () => {
-        sidebar.classList.remove('sidebar--closed');
-        syncUI();
-      });
-    }
-
-    syncUI();
+    // Toggle al click
+    btn.addEventListener('click', () => {
+      const willOpen = sidebar.classList.contains('sidebar--closed');
+      applyState(willOpen);
+    });
   }
 
   _activateFilter(type) {

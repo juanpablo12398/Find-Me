@@ -700,6 +700,112 @@ select.form__input {
   min-height: 600px;
 }
 
+.filters-fab{
+  position:absolute;
+  top:12px;
+  left:12px;
+  z-index:1000;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border:0;
+  border-radius:9999px;
+  cursor:pointer;
+  background:linear-gradient(90deg,#5b7cff,#43c87a);
+  color:#fff;
+  font-weight:600;
+  box-shadow:0 8px 20px rgba(0,0,0,.2);
+  transition:transform .15s,box-shadow .15s,opacity .15s;
+}
+
+.filters-fab:hover{transform:translateY(-1px);
+box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.filters-fab__icon{font-size:1.1rem;line-height:1}
+
+/* Botón Filtros en la barra */
+.button--filters {
+  min-width: 160px;
+}
+
+/* Cuando el sidebar está cerrado, el mapa ocupa t0do igual,
+   pero forzamos un invalidatesize con transición suave */
+.sidebar {
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+/* ============================================ */
+/* BOTÓN FLOTANTE PARA AGREGAR DESAPARECIDO */
+/* ============================================ */
+.map__add-button {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+
+    /* Tamaño y forma circular */
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+
+    /* Colores */
+    background: #2563eb; /* var(--primary) */
+    color: white;
+    border: 2px solid white;
+
+    /* Sombra */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+    /* Cursor y transición */
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    /* Centrar el símbolo + */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    line-height: 1;
+
+    /* Sin estilos de botón por defecto */
+    padding: 0;
+    outline: none;
+}
+
+.map__add-button:hover {
+    background: #1d4ed8; /* var(--primary-hover) */
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.map__add-button:active {
+    transform: scale(0.95);
+}
+
+.map__add-button:focus {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+/* Responsive: ajustar en móvil si es necesario */
+@media (max-width: 768px) {
+    .map__add-button {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+        bottom: 15px;
+        left: 15px;
+    }
+}
+
+@media (max-width:768px){
+
+.filters-fab{top:56px}
+.filters-fab__label{display:none}
+
+}
+
 @media (max-width: 768px) {
   .mapa-container {
     flex-direction: column;

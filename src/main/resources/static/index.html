@@ -30,7 +30,6 @@
     <!-- Navegación Principal -->
     <nav class="nav">
         <button class="nav__button" id="btnNavAvistador">Registrarme</button>
-        <button class="nav__button" id="btnNavForm">Registrar desaparecido</button>
         <button class="nav__button" id="btnNavList">Ver lista</button>
         <button class="nav__button" id="btnNavMapa">🗺️ Mapa</button>
         <button class="nav__button" id="btnLogin">Iniciar sesión</button>
@@ -114,7 +113,7 @@
     <!-- ============================================ -->
     <!-- SECCIÓN: REGISTRAR DESAPARECIDO -->
     <!-- ============================================ -->
-    <section class="section section--active" id="formSection">
+    <section class="section" id="formSection">
         <h2>Registrar Persona Desaparecida</h2>
         <form id="formDesaparecido" novalidate>
             <div class="form__row">
@@ -161,16 +160,13 @@
     <!-- ============================================ -->
     <!-- SECCIÓN: MAPA DE AVISTAMIENTOS CON FILTROS -->
     <!-- ============================================ -->
-    <section class="section" id="mapaSection">
+    <section class="section section--active" id="mapaSection">
         <h2>Mapa de Avistamientos</h2>
 
         <div class="map__controls">
-            <button class="button button--secondary" id="btnReloadMapa">
-                🔄 Actualizar Mapa
-            </button>
-            <button class="button button--primary" id="btnToggleReportar">
-                📍 Activar Modo Reportar
-            </button>
+            <button class="button button--secondary button--filters" id="btnToggleFilters">🧰 Filtros</button>
+            <button class="button button--secondary" id="btnReloadMapa">🔄 Actualizar Mapa</button>
+            <button class="button button--primary" id="btnToggleReportar">📍 Activar Modo Reportar</button>
         </div>
 
         <div class="map__status" id="mapaEstado"></div>
@@ -182,7 +178,6 @@
                 <!-- Header -->
                 <div class="sidebar__header">
                     <h3 class="sidebar__title">Filtros</h3>
-                    <button class="sidebar__toggle" id="btnToggleSidebar">×</button>
                 </div>
 
                 <div class="sidebar__content">
@@ -281,6 +276,16 @@
             <!-- Mapa -->
             <div class="map-wrapper">
                 <div class="map" id="map"></div>
+
+                <!-- ✨ BOTÓN FLOTANTE PARA AGREGAR DESAPARECIDO -->
+                <button id="btnAddDesaparecido" class="map__add-button" aria-label="Registrar desaparecido" title="Registrar persona desaparecida">
+                    +
+                </button>
+                <!-- Botón flotante para reabrir filtros -->
+                <button id="btnSidebarOpen" class="filters-fab u-hidden" aria-label="Mostrar filtros" title="Mostrar filtros">
+                    <span class="filters-fab__icon">🧰</span>
+                    <span class="filters-fab__label">Filtros</span>
+                </button>
             </div>
         </div>
     </section>

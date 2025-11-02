@@ -1,3 +1,4 @@
+import { appState } from './config/state.js';
 import { AuthService } from './services/AuthService.js';
 import { Navigation } from './ui/Navigation.js';
 import { MapManager } from './ui/MapManager.js';
@@ -23,11 +24,23 @@ async function initApp() {
   // 3) Cargar mapa solo cuando el usuario entra a esa sección
   window.addEventListener('loadMapa', () => {
     if (!mapManager) {
+      console.log('📍 Creando MapManager por primera vez...');
       mapManager = new MapManager();
       mapManager.init();
     } else {
+      console.log('📍 Recargando avistamientos...');
       mapManager.loadAvistamientos();
     }
+
+    // 🔧 Recalcula tamaño después de pintar
+    setTimeout(() => {
+      if (appState.map) appState.map.invalidateSize();
+    }, 150);
+  });
+
+  // También si cambia el tamaño de la ventana
+  window.addEventListener('resize', () => {
+    if (appState.map) appState.map.invalidateSize();
   });
 
   // 4) Cargar lista al entrar a lista
@@ -41,13 +54,31 @@ async function initApp() {
 
   // 6) Botones auxiliares
   const btnReloadMapa = document.getElementById('btnReloadMapa');
-  if (btnReloadMapa) btnReloadMapa.onclick = () => mapManager && mapManager.loadAvistamientos();
+  if (btnReloadMapa) {
+    btnReloadMapa.addEventListener('click', async () => {
+      if (!mapManager) {
+        console.warn('⚠️ MapManager no inicializado');
+        return;
+      }
+      console.log('🔄 Actualizando mapa...');
+      await mapManager.refresh();
+      setTimeout(() => {
+        if (appState.map) appState.map.invalidateSize();
+      }, 50);
+    });
+  }
 
   const btnCloseModal = document.getElementById('btnCloseModal');
-  if (btnCloseModal) btnCloseModal.onclick = () => mapManager && mapManager.closeModal();
+  if (btnCloseModal) {
+    btnCloseModal.onclick = () => mapManager && mapManager.closeModal();
+  }
 
   const modal = document.getElementById('modalAvistamiento');
-  if (modal) modal.onclick = (e) => { if (e.target === modal) mapManager && mapManager.closeModal(); };
+  if (modal) {
+    modal.onclick = (e) => {
+      if (e.target === modal) mapManager && mapManager.closeModal();
+    };
+  }
 
   const btnReload = document.getElementById('btnReload');
   if (btnReload) btnReload.onclick = loadList;
@@ -55,52 +86,8 @@ async function initApp() {
   console.log('✅ Aplicación inicializada');
 }
 
-
-// ============================================
-// === FORMULARIO DE LOGIN ===
-// ============================================
-function initLoginForm() {
-  const loginForm = document.getElementById('formLogin');
-  if (!loginForm) return;
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const v = (id) => document.getElementById(id).value.trim();
-    const loginResult = document.getElementById('loginResult');
-    const btnLoginSubmit = document.getElementById('btnLoginSubmit');
-
-    if (loginResult) {
-      loginResult.textContent = 'Iniciando sesión…';
-      loginResult.style.color = '#666';
-    }
-    if (btnLoginSubmit) btnLoginSubmit.disabled = true;
-
-    try {
-      await AuthService.login(v('login_dni'), v('login_email'));
-
-      if (loginResult) {
-        loginResult.textContent = '✅ Sesión iniciada';
-        loginResult.style.color = 'green';
-      }
-
-      setTimeout(() => {
-        navigation.navigateTo('form');
-        loginForm.reset();
-      }, 400);
-    } catch (err) {
-      if (loginResult) {
-        loginResult.textContent = '❌ ' + err.message;
-        loginResult.style.color = 'red';
-      }
-    } finally {
-      if (btnLoginSubmit) btnLoginSubmit.disabled = false;
-    }
-  });
-}
-
 // ============================================
 // === FORMULARIO DE DESAPARECIDOS ===
-// (Mantiene comportamiento original sin sesión)
 // ============================================
 function initDesaparecidosForm() {
   const form = document.getElementById('formDesaparecido');
@@ -112,7 +99,7 @@ function initDesaparecidosForm() {
     const resultado = document.getElementById('resultado');
     const btnSubmit = document.getElementById('btnSubmit');
 
-    // ⬇⬇⬇ COMPORTAMIENTO ORIGINAL (pediste mantenerlo)
+    // Verificar autenticación
     if (!AuthService.getCurrentUser()) {
       if (resultado) {
         resultado.textContent = '❌ Debés iniciar sesión primero.';
@@ -123,7 +110,6 @@ function initDesaparecidosForm() {
       if (lm) lm.textContent = 'Tu sesión no está activa. Iniciá sesión para registrar un desaparecido.';
       return;
     }
-    // ⬆⬆⬆
 
     const v = (id) => document.getElementById(id).value.trim();
 
@@ -162,7 +148,6 @@ function initDesaparecidosForm() {
 
       setTimeout(() => {
         navigation.navigateTo('list');
-        loadList();
       }, 800);
     } catch (err) {
       if (resultado) {

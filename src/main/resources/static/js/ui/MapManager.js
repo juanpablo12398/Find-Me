@@ -62,6 +62,10 @@ export class MapManager {
   init() {
     const map = L.map('map').setView([-34.6037, -58.3816], 12);
 
+    setTimeout(() => {
+      if (appState.map) appState.map.invalidateSize();
+    }, 150);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19
@@ -399,6 +403,34 @@ export class MapManager {
     });
 
     marker.addTo(appState.markersLayer);
+  }
+
+  /**
+   * Actualiza el mapa recargando los avistamientos
+   */
+  async refresh() {
+    try {
+      this._updateEstado('Actualizando…', '#666');
+
+      // Si hay sistema de filtros, pedile que vuelva a aplicar/traer datos
+      if (this.filters && typeof this.filters.applyCurrentFilter === 'function') {
+        // Si tu MapFilters no devuelve el array, igual servirá si internamente hace render;
+        // si SÍ devuelve, lo renderizamos acá también por si acaso.
+        const avs = await this.filters.applyCurrentFilter({ forceReload: true });
+        if (Array.isArray(avs)) this._renderAvistamientos(avs);
+      } else {
+        // Fallback sin filtros: traé todo/publicos y renderizá
+        const avs = (await AvistamientoService.obtenerPublicos?.())
+                 ?? (await AvistamientoService.obtenerTodos?.())
+                 ?? [];
+        this._renderAvistamientos(avs);
+      }
+
+      this._updateEstado('✅ Mapa actualizado', 'green');
+    } catch (err) {
+      console.error('Error refrescando mapa:', err);
+      this._updateEstado('❌ Error al actualizar', 'red');
+    }
   }
 
   /**
