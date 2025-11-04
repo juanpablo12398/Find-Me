@@ -26,11 +26,6 @@ public class LoginPolicy implements Validator<LoginRequestDTO> {
 
     @Override
     public void validate(LoginRequestDTO dto) {
-
-        // Spring inyecta automáticamente:
-        // - LoginRenaperExistsRule (existe en RENAPER)
-        // - LoginAvistadorExistsRule (usuario registrado)
-        // - LoginEmailMatchRule (email coincide)
         for (var rule : rules) {
             rule.check(dto);
         }

@@ -32,9 +32,6 @@ public class AvistamientoController {
         this.readGeoUseCase = readGeoUseCase;
     }
 
-    // ============================================
-    // POST: Crear nuevo avistamiento
-    // ============================================
     @PostMapping(
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -53,21 +50,12 @@ public class AvistamientoController {
         return ResponseEntity.created(location).body(dto);
     }
 
-    // ============================================
-    // GET: Avistamientos para el MAPA
-    // Este endpoint devuelve FrontDTO con fecha formateada
-    // y datos enriquecidos del desaparecido y avistador
-    // ============================================
     @GetMapping("/mapa")
     public ResponseEntity<List<AvistamientoFrontDTO>> obtenerParaMapa() {
         List<AvistamientoFrontDTO> lista = readGeoUseCase.paraMapa();
         return ResponseEntity.ok(lista);
     }
 
-    // ============================================
-    // GET: Buscar avistamientos en un área del mapa
-    // Params: latMin, latMax, lngMin, lngMax
-    // ============================================
     @GetMapping("/mapa/area")
     public ResponseEntity<List<AvistamientoFrontDTO>> obtenerEnArea(
             @RequestParam Double latMin,
@@ -81,10 +69,6 @@ public class AvistamientoController {
         return ResponseEntity.ok(lista);
     }
 
-    // ============================================
-    // GET: Avistamientos de un desaparecido específico
-    // Para mostrar timeline en la página del desaparecido
-    // ============================================
     @GetMapping("/desaparecido/{desaparecidoId}")
     public ResponseEntity<List<AvistamientoFrontDTO>> obtenerPorDesaparecido(
             @PathVariable UUID desaparecidoId) {
@@ -93,19 +77,12 @@ public class AvistamientoController {
         return ResponseEntity.ok(lista);
     }
 
-    // ============================================
-    // GET: Todos los avistamientos públicos (simple)
-    // Sin datos enriquecidos, solo ResponseDTO
-    // ============================================
     @GetMapping
     public ResponseEntity<List<AvistamientoResponseDTO>> obtenerTodos() {
         List<AvistamientoResponseDTO> lista = readUseCase.obtenerTodos();
         return ResponseEntity.ok(lista);
     }
 
-    // ============================================
-    // ENDPOINTS POSTGIS
-    // ============================================
     @GetMapping("/radio")
     public ResponseEntity<List<AvistamientoFrontDTO>> obtenerEnRadio(
             @RequestParam Double lat,

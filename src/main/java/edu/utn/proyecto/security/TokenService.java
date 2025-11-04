@@ -12,8 +12,6 @@ import java.util.Date;
 @Service
 public class TokenService {
     public static final String COOKIE_NAME = "FM_TOKEN";
-
-    // Mejor usar @Value para configuración externa
     @Value("${jwt.secret:CAMBIA_ESTE_SECRETO_LARGO_DEMO_32+_CHARS}")
     private String SECRET;
 
@@ -34,7 +32,7 @@ public class TokenService {
 
     public void writeCookie(HttpServletResponse resp, String jwt) {
         Cookie c = new Cookie(COOKIE_NAME, jwt);
-        c.setHttpOnly(true);  // Previene acceso desde JavaScript
+        c.setHttpOnly(true);
         c.setPath("/");
         c.setMaxAge(7 * 24 * 3600);  // 7 días
         c.setSecure(false);  // Cambiar a true en producción con HTTPS
@@ -46,7 +44,7 @@ public class TokenService {
         Cookie c = new Cookie(COOKIE_NAME, "");
         c.setHttpOnly(true);
         c.setPath("/");
-        c.setMaxAge(0);  // Expira inmediatamente
+        c.setMaxAge(0);
         resp.addCookie(c);
     }
 

@@ -3,13 +3,14 @@ import edu.utn.proyecto.applicacion.dtos.AvistadorResponseDTO;
 import edu.utn.proyecto.applicacion.mappers.AvistadorMapper;
 import edu.utn.proyecto.applicacion.validation.avistador.AvistadorRegistrationPolicy;
 import edu.utn.proyecto.common.validation.abstraccion.Validator;
+import edu.utn.proyecto.domain.service.abstraccion.IAvistadorService;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AvistadorService {
+public class AvistadorService implements IAvistadorService {
 
     private final IRepoDeAvistadores repo;
     private final AvistadorMapper mapper;

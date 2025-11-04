@@ -1,6 +1,4 @@
 package edu.utn.proyecto.security;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -11,14 +9,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class JwtCookieFilter extends OncePerRequestFilter {
-    private final String secret;
 
-    public JwtCookieFilter(String secret) {
-        this.secret = secret;
+    private final JwtVerifier jwtVerifier;
+
+    public JwtCookieFilter(JwtVerifier jwtVerifier) { // inyectalo al crear el filtro
+        this.jwtVerifier = jwtVerifier;
     }
 
     @Override
@@ -30,12 +28,7 @@ public class JwtCookieFilter extends OncePerRequestFilter {
             for (Cookie c : cookies) {
                 if (TokenService.COOKIE_NAME.equals(c.getName())) {
                     try {
-                        var claims = Jwts.parserBuilder()
-                                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
-                                .build()
-                                .parseClaimsJws(c.getValue())
-                                .getBody();
-
+                        var claims = jwtVerifier.parse(c.getValue());
                         String dni = claims.getSubject();
                         if (dni != null) {
                             var auth = new AbstractAuthenticationToken(

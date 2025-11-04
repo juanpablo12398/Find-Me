@@ -2,6 +2,7 @@ package edu.utn.proyecto.domain.service;
 import edu.utn.proyecto.applicacion.dtos.DesaparecidoResponseDTO;
 import edu.utn.proyecto.applicacion.mappers.DesaparecidoMapper;
 import edu.utn.proyecto.applicacion.validation.desaparecido.DesaparecidoCreatePolicy;
+import edu.utn.proyecto.domain.service.abstraccion.IDesaparecidoService;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeDesaparecidos;
 import org.springframework.stereotype.Service;
@@ -10,7 +11,7 @@ import edu.utn.proyecto.common.validation.abstraccion.Validator;
 import java.util.List;
 
 @Service
-public class DesaparecidoService {
+public class DesaparecidoService implements IDesaparecidoService{
 
     private final IRepoDeDesaparecidos repo;
     private final DesaparecidoMapper mapper;

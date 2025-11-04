@@ -1,6 +1,6 @@
 package edu.utn.proyecto.infrastructure.config;
-
 import edu.utn.proyecto.security.JwtCookieFilter;
+import edu.utn.proyecto.security.JwtVerifier;
 import edu.utn.proyecto.security.TokenService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -31,17 +31,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, JwtVerifier jwtVerifier) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .addFilterBefore(new JwtCookieFilter(tokens.secret()), AnonymousAuthenticationFilter.class)
+                // Registramos el filtro de la cookie JWT antes del AnonymousAuthenticationFilter
+                .addFilterBefore(new JwtCookieFilter(jwtVerifier), AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(reg -> reg
                         .requestMatchers("/", "/index.html").permitAll()
                         .requestMatchers("/css/**", "/*.css").permitAll()
                         .requestMatchers("/js/**", "/*.js").permitAll()
-                        .requestMatchers(HttpMethod.GET,
-                                "/images/**", "/assets/**", "/static/**", "/favicon.ico").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/**", "/assets/**", "/static/**", "/favicon.ico").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/avistadores").permitAll()
                         .requestMatchers(HttpMethod.GET,  "/api/desaparecidos").permitAll()
@@ -59,10 +59,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Parsear los orígenes permitidos desde la configuración
         List<String> origins = Arrays.asList(allowedOrigins.split(","));
         configuration.setAllowedOrigins(origins);
-
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(allowCredentials);

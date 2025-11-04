@@ -4,6 +4,7 @@ import edu.utn.proyecto.applicacion.mappers.AvistamientoMapper;
 import edu.utn.proyecto.applicacion.validation.avistamiento.AvistamientoCreatePolicy;
 import edu.utn.proyecto.common.validation.abstraccion.Validator;
 import edu.utn.proyecto.domain.model.concreta.Avistamiento;
+import edu.utn.proyecto.domain.service.abstraccion.IAvistamientoService;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoFrontDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
@@ -17,7 +18,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-public class AvistamientoService {
+public class AvistamientoService implements IAvistamientoService{
 
     private final IRepoDeAvistamientos repoAvistamientos;
     private final IRepoDeAvistadores repoAvistadores;
@@ -38,9 +39,6 @@ public class AvistamientoService {
         this.createPolicy = createPolicy;
     }
 
-    // ============================================
-    // CREAR
-    // ============================================
     @Transactional
     public AvistamientoResponseDTO crearAvistamiento(AvistamientoRequestDTO dto) {
         mapper.normalizeRequestInPlace(dto);
@@ -49,9 +47,6 @@ public class AvistamientoService {
         return mapper.fromDomainToResponse(saved);
     }
 
-    // ============================================
-    // LEER - ResponseDTO simple (sin enriquecer)
-    // ============================================
     @Transactional(readOnly = true)
     public List<AvistamientoResponseDTO> obtenerAvistamientosPublicos() {
         var lista = repoAvistamientos.findPublicos();
@@ -79,9 +74,6 @@ public class AvistamientoService {
         return mapper.fromDomainListToResponseList(lista);
     }
 
-    // ============================================
-    // LEER - FrontDTO enriquecido (para el mapa)
-    // ============================================
     @Transactional(readOnly = true)
     public List<AvistamientoFrontDTO> obtenerParaMapa() {
         return enrichAvistamientos(repoAvistamientos.findPublicos());
@@ -107,9 +99,6 @@ public class AvistamientoService {
         return enrichAvistamientos(repoAvistamientos.findRecientes(desde));
     }
 
-    // ============================================
-    // NUEVOS MÉTODOS CON POSTGIS
-    // ============================================
     @Transactional(readOnly = true)
     public List<AvistamientoFrontDTO> obtenerEnRadio(
             Double lat, Double lng, Double radioKm) {
@@ -146,10 +135,6 @@ public class AvistamientoService {
         return repoAvistamientos.countInBounds(latMin, latMax, lngMin, lngMax);
     }
 
-    // ============================================
-    // MÉTODO PRIVADO: Enriquecer avistamientos
-    // (reutilizable para todos los casos)
-    // ============================================
     private List<AvistamientoFrontDTO> enrichAvistamientos(List<Avistamiento> avistamientos) {
         return avistamientos.stream().map(a -> {
             var desaparecido = repoDesaparecidos.findById(a.getDesaparecidoId())

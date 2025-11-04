@@ -1,12 +1,13 @@
 package edu.utn.proyecto.applicacion.usecase.auth;
 import edu.utn.proyecto.domain.service.AuthService;
+import edu.utn.proyecto.domain.service.abstraccion.IAuthService;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.SessionUserDTO;
 import org.springframework.stereotype.Service;
 
 @Service
 public class LoginUseCase {
-    private final AuthService authService;
+    private final IAuthService authService;
 
     public LoginUseCase(AuthService authService) {
         this.authService = authService;

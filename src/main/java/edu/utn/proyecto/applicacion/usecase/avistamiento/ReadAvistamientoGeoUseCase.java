@@ -1,5 +1,6 @@
 package edu.utn.proyecto.applicacion.usecase.avistamiento;
 import edu.utn.proyecto.domain.service.AvistamientoService;
+import edu.utn.proyecto.domain.service.abstraccion.IAvistamientoService;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistamientoFrontDTO;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.UUID;
 @Service
 public class ReadAvistamientoGeoUseCase {
 
-    private final AvistamientoService service;
+    private final IAvistamientoService service;
 
     public ReadAvistamientoGeoUseCase(AvistamientoService service) {
         this.service = service;

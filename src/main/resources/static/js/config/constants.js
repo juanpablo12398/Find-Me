@@ -42,8 +42,15 @@ export const ERROR_MAPS = {
       "auth.email.mismatch": "El email no coincide con el registrado.",
       default: "Datos inválidos."
     },
-    401: { default: "Credenciales inválidas." }
-  },
+    401: {
+      "auth.token.notfound": "No encontramos tu sesión. Iniciá sesión de nuevo.",
+      "auth.token.expired": "Tu sesión expiró. Volvé a iniciar sesión.",
+      "auth.token.invalid": "Token inválido. Probá iniciar sesión otra vez.",
+      "auth.token.malformed": "Token mal formado.",
+      "auth.token.data.missing": "Faltan datos en el token.",
+      default: "Credenciales inválidas."
+    }
+  }
 
   AVISTAMIENTO: {
     404: {

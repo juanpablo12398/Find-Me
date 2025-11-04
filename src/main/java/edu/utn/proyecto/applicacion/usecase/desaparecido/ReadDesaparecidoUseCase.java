@@ -3,12 +3,13 @@ import edu.utn.proyecto.applicacion.dtos.DesaparecidoResponseDTO;
 import edu.utn.proyecto.applicacion.mappers.DesaparecidoMapper;
 import edu.utn.proyecto.domain.service.DesaparecidoService;
 import java.util.List;
+import edu.utn.proyecto.domain.service.abstraccion.IDesaparecidoService;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.DesaparecidoFrontDTO;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ReadDesaparecidoUseCase {
-    private final DesaparecidoService desaparecidoService;
+    private final IDesaparecidoService desaparecidoService;
     // Cuando necestie exponer datos en el front
     // Los casos de uso que hacen la traducción específica
     private final DesaparecidoMapper desaparecidoMapper;
