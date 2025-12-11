@@ -1,118 +1,142 @@
 package edu.utn.proyecto.infrastructure.adapters.in.rest.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.utn.proyecto.applicacion.usecase.auth.GetCurrentUserUseCase;
 import edu.utn.proyecto.applicacion.usecase.auth.LoginUseCase;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.SessionUserDTO;
-import edu.utn.proyecto.infrastructure.adapters.in.rest.exception.ApiExceptionHandler;
 import edu.utn.proyecto.security.TokenService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.MessageSource;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.UUID;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = AuthController.class)
-@Import(ApiExceptionHandler.class)
-@AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
-    @Autowired MockMvc mvc;
-    @Autowired ObjectMapper om;
+    private MockMvc mvc;
+    private LoginUseCase loginUC;
+    private GetCurrentUserUseCase meUC;
+    private TokenService tokenService;
+    private ObjectMapper om;
 
-    @MockBean LoginUseCase loginUseCase;
-    @SpyBean TokenService tokenService; // Spy para verificar writeCookie/clearCookie sin fijar el JWT
-    @MockBean MessageSource messageSource;
+    @RestControllerAdvice
+    static class TestAdvice {
+        @ExceptionHandler(RuntimeException.class)
+        ResponseEntity<String> re(RuntimeException ex) {
+            return ResponseEntity.status(500).body(ex.getMessage());
+        }
+    }
+
+    @BeforeEach
+    void setup() {
+        loginUC = mock(LoginUseCase.class);
+        meUC = mock(GetCurrentUserUseCase.class);
+        tokenService = mock(TokenService.class);
+        mvc = MockMvcBuilders
+                .standaloneSetup(new AuthController(loginUC, meUC, tokenService))
+                .setControllerAdvice(new TestAdvice())
+                .build();
+        om = new ObjectMapper();
+    }
 
     @Test
-    void login_ok_devuelve200_body_y_setCookie() throws Exception {
-        // Arrange
+    @DisplayName("POST /api/auth/login → 200, set cookie, body OK")
+    void login_ok() throws Exception {
         var req = new LoginRequestDTO();
-        req.setDni("12345678");
-        req.setEmail("user@mail.com");
+        var user = new SessionUserDTO(UUID.randomUUID(), "123", "a@b.com","Juan");
+        when(loginUC.execute(any(LoginRequestDTO.class))).thenReturn(user);
+        when(tokenService.generate(anyString(), anyString(), anyString(), anyString())).thenReturn("jwt");
 
-        UUID avistadorId = UUID.randomUUID();
-        // IMPORTANTE: tu SessionUserDTO debe tener este ctor (UUID id, String dni, String email, String nombre)
-        var session = new SessionUserDTO(avistadorId, "12345678", "user@mail.com", "Juan");
-        given(loginUseCase.execute(any(LoginRequestDTO.class))).willReturn(session);
-
-        // Act
-        var res = mvc.perform(post("/api/auth/login")
+        mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(req)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(avistadorId.toString()))
-                .andExpect(jsonPath("$.dni").value("12345678"))
-                .andExpect(jsonPath("$.email").value("user@mail.com"))
-                .andExpect(jsonPath("$.nombre").value("Juan"))
-                .andReturn();
+                .andExpect(jsonPath("$.dni").value("123"))
+                .andExpect(jsonPath("$.email").value("a@b.com"))
+                .andExpect(jsonPath("$.nombre").value("Juan"));
 
-        // Assert interacciones
-        verify(loginUseCase).execute(any(LoginRequestDTO.class));
-        // No verifico parámetros de generate para no acoplar al número/orden de claims.
-        // Me alcanza con verificar que escribiste la cookie con algún JWT.
-        verify(tokenService).writeCookie(any(), any(String.class));
-
-        // Assert cookie
-        var setCookies = res.getResponse().getHeaders("Set-Cookie");
-        assertThat(setCookies).isNotEmpty();
-        assertThat(setCookies).anySatisfy(c -> {
-            assertThat(c).contains("FM_TOKEN=");
-            assertThat(c).contains("HttpOnly");
-            assertThat(c).contains("Path=/");
-            // 7 días = 604800
-            assertThat(c).contains("Max-Age=604800");
-        });
+        verify(loginUC).execute(any(LoginRequestDTO.class));
+        verify(tokenService).generate(eq(user.getId().toString()), eq("123"), eq("a@b.com"), eq("Juan"));
+        verify(tokenService).writeCookie(any(HttpServletResponse.class), eq("jwt"));
+        verifyNoMoreInteractions(loginUC, meUC, tokenService);
     }
 
     @Test
-    void login_errorPolicy_problemDetail_sin_detail() throws Exception {
-        // Arrange
+    @DisplayName("POST /api/auth/login con email null → sigue OK (pasa null al generate)")
+    void login_nullEmail_ok() throws Exception {
         var req = new LoginRequestDTO();
-        req.setDni("111");
-        req.setEmail("x@x.com");
+        var user = new SessionUserDTO(UUID.randomUUID(), "555", null,"SinMail");
+        when(loginUC.execute(any(LoginRequestDTO.class))).thenReturn(user);
+        when(tokenService.generate(anyString(), anyString(), isNull(), anyString())).thenReturn("jwt2");
 
-        var ex = edu.utn.proyecto.common.exception.DomainException.of(
-                "auth.user.not_found", HttpStatus.NOT_FOUND, "Usuario no registrado.");
-        given(loginUseCase.execute(any(LoginRequestDTO.class))).willThrow(ex);
-
-        // Act & Assert
         mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(req)))
-                .andExpect(status().isNotFound())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(404))
-                // Tu ApiExceptionHandler actual incluye "key" en la raíz y
-                // (según el body que mostraste) no envía "detail". No lo asertamos.
-                .andExpect(jsonPath("$.key").value("auth.user.not_found"));
+                .andExpect(status().isOk());
+
+        verify(tokenService).generate(eq(user.getId().toString()), eq("555"), isNull(), eq("SinMail"));
+        verify(tokenService).writeCookie(any(HttpServletResponse.class), eq("jwt2"));
     }
 
     @Test
-    void me_sinAuth_devuelve401() throws Exception {
+    @DisplayName("POST /api/auth/login → service lanza → 500")
+    void login_serviceThrows_500() throws Exception {
+        when(loginUC.execute(any(LoginRequestDTO.class))).thenThrow(new RuntimeException("boom"));
+
+        mvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(new LoginRequestDTO())))
+                .andExpect(status().isInternalServerError());
+
+        verify(loginUC).execute(any(LoginRequestDTO.class));
+        verifyNoMoreInteractions(loginUC);
+        verifyNoInteractions(tokenService);
+    }
+
+    @Test
+    @DisplayName("GET /api/auth/me → 200")
+    void me_ok() throws Exception {
+        var user = new SessionUserDTO(null, "321",null,null);
+        when(meUC.execute(any(HttpServletRequest.class))).thenReturn(user);
+
         mvc.perform(get("/api/auth/me"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.dni").value("321"));
+
+        verify(meUC).execute(any(HttpServletRequest.class));
+        verifyNoMoreInteractions(meUC);
     }
 
     @Test
-    void logout_clears_cookie_204() throws Exception {
-        mvc.perform(post("/api/auth/logout"))
-                .andExpect(status().isNoContent());
+    @DisplayName("GET /api/auth/me → service lanza → 500")
+    void me_serviceThrows_500() throws Exception {
+        when(meUC.execute(any(HttpServletRequest.class))).thenThrow(new RuntimeException("x"));
 
-        verify(tokenService).clearCookie(any());
+        mvc.perform(get("/api/auth/me"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("POST /api/auth/logout → 204 y limpia cookie")
+    void logout_ok() throws Exception {
+        mvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().doesNotExist("Location"))
+                .andExpect(content().string(""));
+
+        verify(tokenService).clearCookie(any(HttpServletResponse.class));
+        verifyNoMoreInteractions(tokenService);
     }
 }

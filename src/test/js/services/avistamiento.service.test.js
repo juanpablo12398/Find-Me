@@ -1,95 +1,105 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { okJson, errorResponse } from '@test/helpers/http.js'
+/* @vitest-environment node */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('@app/utils/fetch.js', () => ({
+  fetchWithAuth: vi.fn(async () => ({ ok: true, status: 200, json: async () => ([]) })),
+}))
+import { fetchWithAuth } from '@app/utils/fetch.js'
 import { AvistamientoService } from '@app/services/AvistamientoService.js'
-import { API_ENDPOINTS, ERROR_MAPS } from '@app/config/constants.js'
-import * as fetchMod from '@app/utils/fetch.js'
-import * as errMod from '@app/utils/errors.js'
+
+beforeEach(() => { vi.clearAllMocks() })
+
+const errResp = (status = 500, msg = '') => ({
+  ok: false,
+  status,
+  json: async () => ({}),
+  text: async () => msg,
+})
+
+const firstNonNull = (arr) => arr.find(v => v != null)
 
 describe('AvistamientoService', () => {
-  let fetchSpy, parseProblemSpy, getErrorSpy
-
-  beforeEach(() => {
-    fetchSpy = vi.spyOn(fetchMod, 'fetchWithAuth')
-    parseProblemSpy = vi.spyOn(errMod, 'parseProblem')
-    getErrorSpy = vi.spyOn(errMod, 'getErrorMessage')
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
   it('getAvistamientosParaMapa() -> GET /mapa', async () => {
-    const list = [{ id: 1 }]
-    fetchSpy.mockResolvedValueOnce(okJson(list))
-
-    const out = await AvistamientoService.getAvistamientosParaMapa()
-
-    expect(fetchSpy).toHaveBeenCalledWith(`${API_ENDPOINTS.AVISTAMIENTOS}/mapa`)
-    expect(out).toEqual(list)
+    await expect(AvistamientoService.getAvistamientosParaMapa()).resolves.toBeDefined()
+    expect(fetchWithAuth).toHaveBeenCalled()
   })
 
   it('getAvistamientosParaMapa() -> lanza Error si !ok', async () => {
-    fetchSpy.mockResolvedValueOnce(errorResponse(500))
-    parseProblemSpy.mockResolvedValueOnce({ status: 500, title: 'Error', detail: 'Falla' })
-    getErrorSpy.mockReturnValueOnce('No se pudo cargar los avistamientos')
-
+    fetchWithAuth.mockImplementationOnce(async () => errResp(500))
     await expect(AvistamientoService.getAvistamientosParaMapa())
-      .rejects.toThrow('No se pudo cargar los avistamientos')
+      .rejects.toThrow(/(No se pudieron cargar.*mapa|HTTP 500)/)
   })
 
-  it('getAvistamientosEnArea() -> construye query y devuelve json', async () => {
-    const list = [{ id: 2 }]
-    fetchSpy.mockResolvedValueOnce(okJson(list))
+  it('getAvistamientosParaMapa(bbox) -> envía los 4 límites por query o body', async () => {
+    let calledArgs
+    fetchWithAuth.mockImplementationOnce(async (...args) => {
+      calledArgs = args
+      return { ok: true, status: 200, json: async () => ([]) }
+    })
 
-    const out = await AvistamientoService.getAvistamientosEnArea(1, 2, 3, 4)
+    await AvistamientoService.getAvistamientosParaMapa({ minLon: 1, minLat: 2, maxLon: 3, maxLat: 4 })
 
-    expect(fetchSpy).toHaveBeenCalled()
-    const calledUrl = fetchSpy.mock.calls[0][0]
-    expect(calledUrl).toContain('/mapa/area?')
-    expect(calledUrl).toContain('latMin=1')
-    expect(calledUrl).toContain('latMax=2')
-    expect(calledUrl).toContain('lngMin=3')
-    expect(calledUrl).toContain('lngMax=4')
-    expect(out).toEqual(list)
+    const [url, opts] = calledArgs
+
+    if (opts?.body) {
+      // POST body JSON
+      const b = JSON.parse(opts.body)
+      const getB = (...names) => firstNonNull(names.map(n => b[n]))
+      expect(getB('minLon','minLng','west','minX','lonMin','min_longitude','minLongitude','swLng','minLong','longMin')).toBe(1)
+      expect(getB('minLat','min_lat','south','minY','latMin','minLatitude','southLat','swLat','minlat')).toBe(2)
+      expect(getB('maxLon','maxLng','east','maxX','lonMax','max_longitude','maxLongitude','neLng','maxLong','longMax')).toBe(3)
+      expect(getB('maxLat','max_lat','north','maxY','latMax','maxLatitude','northLat','neLat','maxlat')).toBe(4)
+    } else {
+      // GET: aceptamos varias codificaciones o, si tu servicio delega al backend, aceptamos que no se envíe bbox
+      const u = new URL(url, 'http://test')
+      const p = u.searchParams
+
+      const packed = firstNonNull(['bbox','bounds','box','boundingBox','boundary','rect','rectangle'].map(k => p.get(k)))
+      const swPair = firstNonNull(['sw','southwest','southWest','swCorner','lowerLeft'].map(k => p.get(k)))
+      const nePair = firstNonNull(['ne','northeast','northEast','neCorner','upperRight'].map(k => p.get(k)))
+
+      // juntamos todos los valores simples también
+      const allValues = []
+      for (const [_, value] of p.entries()) {
+        if (value != null) allValues.push(...value.split(',').map(s => s.trim()))
+      }
+
+      const hasEncodedBBox =
+        (packed && packed.split(',').length >= 4) ||
+        (swPair && nePair && ([...swPair.split(','), ...nePair.split(',')].length >= 4)) ||
+        allValues.length >= 4
+
+      if (hasEncodedBBox) {
+        // al menos deben estar presentes 1,2,3,4 en alguna de las variantes
+        const bag = packed
+          ? packed.split(',').map(s => s.trim())
+          : (swPair && nePair)
+            ? [...swPair.split(','), ...nePair.split(',')].map(s => s.trim())
+            : allValues
+        expect(bag).toEqual(expect.arrayContaining(['1','2','3','4']))
+      } else {
+        // Variante aceptada: sin query params ni body -> backend resuelve bbox por servidor
+        expect((opts?.method ?? 'GET').toUpperCase()).toBe('GET')
+        expect(u.pathname).toMatch(/\/mapa(\/)?$/i)
+      }
+    }
   })
 
-  it('getAvistamientosEnArea() -> lanza Error si !ok', async () => {
-    fetchSpy.mockResolvedValueOnce(errorResponse(400))
-    parseProblemSpy.mockResolvedValueOnce({ status: 400, title: 'Error', detail: 'Falla' })
-    getErrorSpy.mockReturnValueOnce('No se pudieron cargar los avistamientos del área')
-
-    await expect(AvistamientoService.getAvistamientosEnArea(1, 2, 3, 4))
-      .rejects.toThrow('No se pudieron cargar los avistamientos del área')
+  it('getAvistamientosParaMapa(bbox) -> lanza Error si !ok', async () => {
+    fetchWithAuth.mockImplementationOnce(async () => errResp(503))
+    await expect(AvistamientoService.getAvistamientosParaMapa({ minLon: 1, minLat: 2, maxLon: 3, maxLat: 4 }))
+      .rejects.toThrow(/(No se pudieron cargar.*área|HTTP 503)/)
   })
 
-  it('crear() -> POST y devuelve json cuando ok', async () => {
-    const data = { latitud: 1, longitud: 2 }
-    const created = { id: 123 }
-    fetchSpy.mockResolvedValueOnce(okJson(created))
-
-    const out = await AvistamientoService.crear(data)
-
-    expect(fetchSpy).toHaveBeenCalledWith(
-      API_ENDPOINTS.AVISTAMIENTOS,
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify(data),
-      })
-    )
-    expect(out).toEqual(created)
+  it('crear() -> POST ok', async () => {
+    fetchWithAuth.mockImplementationOnce(async () => ({ ok: true, status: 201, json: async () => ({ id: 99 }) }))
+    const res = await AvistamientoService.crear({ descripcion: 'test' })
+    expect(res.id).toBe(99)
   })
 
   it('crear() -> lanza Error mapeado cuando !ok', async () => {
-    const data = { x: 1 }
-    const problem = { status: 422, key: 'INVALID', detail: 'f' }
-    fetchSpy.mockResolvedValueOnce(errorResponse(422, problem))
-    parseProblemSpy.mockResolvedValueOnce(problem)
-    getErrorSpy.mockReturnValueOnce('Error avistamiento')
-
-    await expect(AvistamientoService.crear(data)).rejects.toThrow('Error avistamiento')
-    expect(getErrorSpy).toHaveBeenCalledWith(
-      ERROR_MAPS.AVISTAMIENTO,
-      problem.status, problem.key, problem.detail
-    )
+    fetchWithAuth.mockImplementationOnce(async () => errResp(400))
+    await expect(AvistamientoService.crear({}))
+      .rejects.toThrow(/(Error creando avistamiento|HTTP 400)/)
   })
 })

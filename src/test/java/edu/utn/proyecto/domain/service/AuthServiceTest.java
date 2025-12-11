@@ -1,119 +1,139 @@
 package edu.utn.proyecto.domain.service;
 import edu.utn.proyecto.applicacion.mappers.LoginMapper;
+import edu.utn.proyecto.applicacion.mappers.TokenMapper;
 import edu.utn.proyecto.applicacion.validation.auth.LoginPolicy;
-import edu.utn.proyecto.auth.exception.AuthError;
-import edu.utn.proyecto.common.exception.DomainException;
+import edu.utn.proyecto.applicacion.validation.auth.TokenPolicy;
+import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.LoginRequestDTO;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.SessionUserDTO;
+import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.TokenRequestDTO;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.RenaperPersonaEntity;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
-import edu.utn.proyecto.domain.model.concreta.Avistador;
+import io.jsonwebtoken.Claims;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InOrder;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
 
-    @Mock LoginPolicy policy;
-    @Mock LoginMapper mapper;
-    @Mock IRepoDeRenaper renaper;
-    @Mock IRepoDeAvistadores repoAvistadores;
+    @Mock private LoginPolicy loginPolicy;
+    @Mock private TokenPolicy tokenPolicy;
+    @Mock private LoginMapper loginMapper;
+    @Mock private TokenMapper tokenMapper;
+    @Mock private IRepoDeRenaper renaper;
+    @Mock private IRepoDeAvistadores repoAvistadores;
+
+    private AuthService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new AuthService(loginPolicy, tokenPolicy, loginMapper, tokenMapper, renaper, repoAvistadores);
+    }
 
     @Test
-    void login_orquesta_normalizeLuegoValidate_luegoRepos_yMapea() {
-        var service = new AuthService(policy, mapper, renaper, repoAvistadores);
+    @DisplayName("login: usa nombre del avistador si está presente (no consulta RENAPER)")
+    void login_usesAvistadorName_whenPresent() {
+        LoginRequestDTO req = new LoginRequestDTO();
+        req.setDni("123");
+        UUID id = UUID.randomUUID();
 
-        var req = new LoginRequestDTO();
-        req.setDni("12345678");
-        req.setEmail("a@a.com");
+        Avistador av = new Avistador();
+        av.setId(id);
+        av.setNombre("PEPE");
 
-        UUID avistadorId = UUID.randomUUID();
-        var av = new Avistador(avistadorId, "12345678", "Juan", "Perez",
-                30, "Dir", "a@a.com", null, LocalDateTime.now());
-        when(repoAvistadores.findByDni("12345678")).thenReturn(Optional.of(av));
+        SessionUserDTO expected = new SessionUserDTO(id, "123", "e@e.com", "PEPE");
 
-        // ⭐ CAMBIO: Ahora incluye el ID como primer parámetro
-        var expected = new SessionUserDTO(avistadorId, "12345678", "a@a.com", "Juan");
-        when(mapper.fromLoginRequestToSession(req, avistadorId, "Juan")).thenReturn(expected);
+        when(repoAvistadores.findByDni("123")).thenReturn(Optional.of(av));
+        when(loginMapper.fromLoginRequestToSession(req, id, "PEPE")).thenReturn(expected);
 
-        var out = service.login(req);
+        SessionUserDTO out = service.login(req);
 
-        // Orden esperado
-        InOrder io = inOrder(mapper, policy, repoAvistadores);
-        io.verify(mapper).normalizeRequestInPlace(req);
-        io.verify(policy).validate(req);
-        io.verify(repoAvistadores).findByDni("12345678");
-        io.verify(mapper).fromLoginRequestToSession(req, avistadorId, "Juan"); // ⭐ Con ID
-        io.verifyNoMoreInteractions();
+        assertSame(expected, out);
+
+        InOrder inOrder = inOrder(loginMapper, loginPolicy, repoAvistadores);
+        inOrder.verify(loginMapper).normalizeRequestInPlace(req);
+        inOrder.verify(loginPolicy).validate(req);
+        inOrder.verify(repoAvistadores).findByDni("123");
 
         verifyNoInteractions(renaper);
-
-        assertThat(out).isSameAs(expected);
+        verify(loginMapper).fromLoginRequestToSession(req, id, "PEPE");
+        verifyNoMoreInteractions(loginMapper, loginPolicy, repoAvistadores);
     }
 
     @Test
-    void login_siPolicyFalla_noMapea_y_propagacionDomainException() {
-        var service = new AuthService(policy, mapper, renaper, repoAvistadores);
-        var req = new LoginRequestDTO();
+    @DisplayName("login: cuando el nombre del avistador está vacío, lo resuelve desde RENAPER")
+    void login_resolvesName_fromRenaper_whenBlank() {
+        LoginRequestDTO req = new LoginRequestDTO();
+        req.setDni("456");
+        UUID id = UUID.randomUUID();
 
-        doThrow(DomainException.of(AuthError.PADRON_NOT_FOUND.key,
-                AuthError.PADRON_NOT_FOUND.status, "No existe en padrón"))
-                .when(policy).validate(req);
+        Avistador av = new Avistador();
+        av.setId(id);
+        av.setNombre("   "); // blank
 
-        assertThatThrownBy(() -> service.login(req))
-                .isInstanceOf(DomainException.class)
-                .satisfies(ex -> {
-                    var de = (DomainException) ex;
-                    assertThat(de.getKey()).isEqualTo(AuthError.PADRON_NOT_FOUND.key);
-                    assertThat(de.getStatus()).isEqualTo(AuthError.PADRON_NOT_FOUND.status);
-                });
+        RenaperPersonaEntity ren = mock(RenaperPersonaEntity.class);
+        when(ren.getNombre()).thenReturn("RENAPER_NOMBRE");
 
-        verify(mapper).normalizeRequestInPlace(req);
-        verify(policy).validate(req);
-        verifyNoInteractions(repoAvistadores, renaper);
-        verify(mapper, never()).fromLoginRequestToSession(any(), any(), any()); // ⭐ 3 parámetros
+        SessionUserDTO expected = new SessionUserDTO(id, "456", "", "RENAPER_NOMBRE");
+
+        when(repoAvistadores.findByDni("456")).thenReturn(Optional.of(av));
+        when(renaper.findByDni("456")).thenReturn(Optional.of(ren));
+        when(loginMapper.fromLoginRequestToSession(req, id, "RENAPER_NOMBRE")).thenReturn(expected);
+
+        SessionUserDTO out = service.login(req);
+
+        assertSame(expected, out);
+        verify(renaper).findByDni("456");
+        verify(loginMapper).fromLoginRequestToSession(req, id, "RENAPER_NOMBRE");
     }
 
     @Test
-    void login_resolvedNombre_caeEnRenaper_siAvistadorNoTieneNombre() {
-        var service = new AuthService(policy, mapper, renaper, repoAvistadores);
+    @DisplayName("login: si RENAPER tampoco tiene nombre, se pasa null como resolvedNombre")
+    void login_resolvedName_null_whenRenaperEmpty() {
+        LoginRequestDTO req = new LoginRequestDTO();
+        req.setDni("789");
+        UUID id = UUID.randomUUID();
 
-        var req = new LoginRequestDTO();
-        req.setDni("12345678");
-        req.setEmail("a@a.com");
+        Avistador av = new Avistador();
+        av.setId(id);
+        av.setNombre(null);
 
-        UUID avistadorId = UUID.randomUUID();
-        // Avistador sin nombre
-        var av = new Avistador(avistadorId, "12345678", "", "",
-                30, "Dir", "a@a.com", null, LocalDateTime.now());
-        when(repoAvistadores.findByDni("12345678")).thenReturn(Optional.of(av));
+        SessionUserDTO expected = new SessionUserDTO(id, "789", "", null);
 
-        // Renaper con nombre
-        var persona = new RenaperPersonaEntity();
-        persona.setDni("12345678");
-        persona.setNombre("NombreRENAPER");
-        when(renaper.findByDni("12345678")).thenReturn(Optional.of(persona));
+        when(repoAvistadores.findByDni("789")).thenReturn(Optional.of(av));
+        when(renaper.findByDni("789")).thenReturn(Optional.empty());
+        when(loginMapper.fromLoginRequestToSession(req, id, null)).thenReturn(expected);
 
-        // ⭐ CAMBIO: Incluir ID
-        var expected = new SessionUserDTO(avistadorId, "12345678", "a@a.com", "NombreRENAPER");
-        when(mapper.fromLoginRequestToSession(req, avistadorId, "NombreRENAPER")).thenReturn(expected);
+        SessionUserDTO out = service.login(req);
 
-        var out = service.login(req);
-        assertThat(out.getNombre()).isEqualTo("NombreRENAPER");
+        assertSame(expected, out);
+    }
 
-        InOrder io = inOrder(mapper, policy, repoAvistadores, renaper, mapper);
-        io.verify(mapper).normalizeRequestInPlace(req);
-        io.verify(policy).validate(req);
-        io.verify(repoAvistadores).findByDni("12345678");
-        io.verify(renaper).findByDni("12345678");
-        io.verify(mapper).fromLoginRequestToSession(req, avistadorId, "NombreRENAPER"); // ⭐ Con ID
+    @Test
+    @DisplayName("currentUser: valida con TokenPolicy y mapea Claims a SessionUser")
+    void currentUser_ok() {
+        TokenRequestDTO tr = mock(TokenRequestDTO.class);
+        Claims claims = mock(Claims.class);
+        when(tr.getClaims()).thenReturn(claims);
+
+        SessionUserDTO expected = new SessionUserDTO(UUID.randomUUID(), "1", "", "N");
+        when(tokenMapper.toSessionUser(claims)).thenReturn(expected);
+
+        SessionUserDTO out = service.currentUser(tr);
+
+        assertSame(expected, out);
+        verify(tokenPolicy).validate(tr);
+        verify(tokenMapper).toSessionUser(claims);
+        verifyNoMoreInteractions(tokenPolicy, tokenMapper);
     }
 }

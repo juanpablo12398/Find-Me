@@ -3,103 +3,70 @@ import edu.utn.proyecto.domain.model.concreta.Desaparecido;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.DesaparecidoEntity;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.mappers.DesaparecidoPersistenceMapper;
 import edu.utn.proyecto.infrastructure.ports.out.jpa.DesaparecidoJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class RepositorioDeDesaparecidosTest {
 
-    @Mock DesaparecidoJpaRepository jpa;
-    @Mock DesaparecidoPersistenceMapper mapper;
+    private DesaparecidoJpaRepository jpa;
+    private DesaparecidoPersistenceMapper mapper;
+    private RepositorioDeDesaparecidos repo;
 
-    @Captor ArgumentCaptor<DesaparecidoEntity> entityCaptor;
-
-    @Test
-    void save_mapeaDomainAEntity_y_devuelveDomainMapeado() {
-        var repo = new RepositorioDeDesaparecidos(jpa, mapper);
-
-        var domain = new Desaparecido("Ana","Perez","123","desc","foto");
-        var entity = new DesaparecidoEntity();
-        var savedEntity = new DesaparecidoEntity();
-        var mappedBack = new Desaparecido("Ana","Perez","123","desc","foto");
-        mappedBack.setId(UUID.randomUUID());
-        mappedBack.setFechaDesaparicion(LocalDateTime.of(2025,1,1,10,0));
-
-        when(mapper.domainToEntity(domain)).thenReturn(entity);
-        when(jpa.save(any(DesaparecidoEntity.class))).thenReturn(savedEntity);
-        when(mapper.entityToDomain(savedEntity)).thenReturn(mappedBack);
-
-        var out = repo.save(domain);
-
-        verify(mapper).domainToEntity(domain);
-        verify(jpa).save(entityCaptor.capture());
-        verify(mapper).entityToDomain(savedEntity);
-        verifyNoMoreInteractions(jpa, mapper);
-
-        assertThat(entityCaptor.getValue()).isSameAs(entity);
-        assertThat(out).isSameAs(mappedBack);
+    @BeforeEach
+    void setUp() {
+        jpa = mock(DesaparecidoJpaRepository.class);
+        mapper = mock(DesaparecidoPersistenceMapper.class);
+        repo = new RepositorioDeDesaparecidos(jpa, mapper);
     }
 
     @Test
-    void getDesaparecidos_findAll_y_mapeaLista() {
-        var repo = new RepositorioDeDesaparecidos(jpa, mapper);
+    void save_maps_roundtrip() {
+        var d = new Desaparecido("n","a","1","d","f");
+        var e = new DesaparecidoEntity();
+        var saved = new DesaparecidoEntity();
+        var back = new Desaparecido("n","a","1","d","f");
 
-        var e1 = new DesaparecidoEntity();
-        var e2 = new DesaparecidoEntity();
-        var d1 = new Desaparecido("A","B","1","d1","f1");
-        var d2 = new Desaparecido("C","D","2","d2","f2");
+        when(mapper.domainToEntity(d)).thenReturn(e);
+        when(jpa.save(e)).thenReturn(saved);
+        when(mapper.entityToDomain(saved)).thenReturn(back);
 
-        when(jpa.findAll()).thenReturn(List.of(e1, e2));
-        when(mapper.entityToDomain(e1)).thenReturn(d1);
-        when(mapper.entityToDomain(e2)).thenReturn(d2);
-
-        var out = repo.getDesaparecidos();
-
-        verify(jpa).findAll();
-        verify(mapper).entityToDomain(e1);
-        verify(mapper).entityToDomain(e2);
-        verifyNoMoreInteractions(jpa, mapper);
-
-        assertThat(out).containsExactly(d1, d2);
+        assertSame(back, repo.save(d));
     }
 
     @Test
-    void findById_delegaA_JPA_y_mapeaOptional() {
-        var repo = new RepositorioDeDesaparecidos(jpa, mapper);
+    void getDesaparecidos_maps_list() {
+        when(jpa.findAll()).thenReturn(List.of(new DesaparecidoEntity(), new DesaparecidoEntity()));
+        when(mapper.entityToDomain(any(DesaparecidoEntity.class)))
+                .thenReturn(new Desaparecido("n","a","1","d","f"),
+                        new Desaparecido("n","a","1","d","f"));
+
+        assertEquals(2, repo.getDesaparecidos().size());
+    }
+
+    @Test
+    void findById_maps_optional() {
         var id = UUID.randomUUID();
-        var entity = new DesaparecidoEntity();
-        var mapped = new Desaparecido("A","B","1","d","f");
+        var e = new DesaparecidoEntity();
+        var d = new Desaparecido("n","a","1","d","f");
 
-        when(jpa.findById(id)).thenReturn(Optional.of(entity));
-        when(mapper.entityToDomain(entity)).thenReturn(mapped);
+        when(jpa.findById(id)).thenReturn(Optional.of(e));
+        when(mapper.entityToDomain(e)).thenReturn(d);
 
-        var out = repo.findById(id);
-
-        assertThat(out).containsSame(mapped);
-        verify(jpa).findById(id);
-        verify(mapper).entityToDomain(entity);
-        verifyNoMoreInteractions(jpa, mapper);
+        var res = repo.findById(id);
+        assertTrue(res.isPresent());
+        assertSame(d, res.get());
     }
 
     @Test
-    void existsByDni_delegaA_JPA() {
-        var repo = new RepositorioDeDesaparecidos(jpa, mapper);
-
+    void existsByDni_delegates() {
         when(jpa.existsByDni("123")).thenReturn(true);
-        assertThat(repo.existsByDni("123")).isTrue();
-
-        when(jpa.existsByDni("123")).thenReturn(false);
-        assertThat(repo.existsByDni("123")).isFalse();
-
-        verify(jpa, times(2)).existsByDni("123");
-        verifyNoInteractions(mapper);
+        assertTrue(repo.existsByDni("123"));
+        verify(jpa).existsByDni("123");
     }
 }

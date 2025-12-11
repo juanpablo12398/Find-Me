@@ -3,90 +3,82 @@ import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.AvistadorEntity;
 import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.mappers.AvistadorPersistenceMapper;
 import edu.utn.proyecto.infrastructure.ports.out.jpa.AvistadorJpaRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
-import java.time.LocalDateTime;
+import org.mockito.InOrder;
 import java.util.Optional;
 import java.util.UUID;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class RepositorioDeAvistadoresTest {
 
-    @Mock AvistadorJpaRepository jpa;
-    @Mock AvistadorPersistenceMapper mapper;
+    private AvistadorJpaRepository jpa;
+    private AvistadorPersistenceMapper mapper;
+    private RepositorioDeAvistadores repo;
 
-    @Captor ArgumentCaptor<AvistadorEntity> entityCaptor;
-
-    @Test
-    void save_mapeaDomainAEntity_guardaYDevuelveDomainMapeado() {
-        var repo = new RepositorioDeAvistadores(jpa, mapper);
-
-        var domain = new Avistador(
-                UUID.randomUUID(), "12345678", "ANA", "PEREZ",
-                28, "Calle 1", "a@a.com", "111",
-                LocalDateTime.now()
-        );
-        var entity = new AvistadorEntity();
-        var savedEntity = new AvistadorEntity(); // lo que devuelve JPA
-        var mappedBack = new Avistador(
-                domain.getId(), domain.getDni(), domain.getNombre(), domain.getApellido(),
-                domain.getEdad(), domain.getDireccion(), domain.getEmail(), domain.getTelefono(),
-                domain.getCreadoEn()
-        );
-
-        when(mapper.domainToEntity(domain)).thenReturn(entity);
-        when(jpa.save(any(AvistadorEntity.class))).thenReturn(savedEntity);
-        when(mapper.entityToDomain(savedEntity)).thenReturn(mappedBack);
-
-        var out = repo.save(domain);
-
-        verify(mapper).domainToEntity(domain);
-        verify(jpa).save(entityCaptor.capture());
-        verify(mapper).entityToDomain(savedEntity);
-        verifyNoMoreInteractions(jpa, mapper);
-
-        assertThat(entityCaptor.getValue()).isSameAs(entity);
-        assertThat(out).isSameAs(mappedBack);
+    @BeforeEach
+    void setUp() {
+        jpa = mock(AvistadorJpaRepository.class);
+        mapper = mock(AvistadorPersistenceMapper.class);
+        repo = new RepositorioDeAvistadores(jpa, mapper);
     }
 
     @Test
-    void findByDni_delegaA_JPA_y_mapeaOptional() {
-        var repo = new RepositorioDeAvistadores(jpa, mapper);
+    void save_maps_and_returns_domain() {
+        var domain = new Avistador();
+        var entity = new AvistadorEntity();
+        var saved = new AvistadorEntity();
+        var mappedBack = new Avistador();
 
+        when(mapper.domainToEntity(domain)).thenReturn(entity);
+        when(jpa.save(entity)).thenReturn(saved);
+        when(mapper.entityToDomain(saved)).thenReturn(mappedBack);
+
+        var result = repo.save(domain);
+        assertSame(mappedBack, result);
+
+        InOrder order = inOrder(mapper, jpa);
+        order.verify(mapper).domainToEntity(domain);
+        order.verify(jpa).save(entity);
+        order.verify(mapper).entityToDomain(saved);
+    }
+
+    @Test
+    void findByDni_present_maps() {
         var entity = new AvistadorEntity();
         var mapped = new Avistador();
         when(jpa.findByDni("123")).thenReturn(Optional.of(entity));
         when(mapper.entityToDomain(entity)).thenReturn(mapped);
 
-        var out = repo.findByDni("123");
-
-        assertThat(out).containsSame(mapped);
-        verify(jpa).findByDni("123");
-        verify(mapper).entityToDomain(entity);
-        verifyNoMoreInteractions(jpa, mapper);
+        var opt = repo.findByDni("123");
+        assertTrue(opt.isPresent());
+        assertSame(mapped, opt.get());
     }
 
     @Test
-    void existsByDni_true_siJPAEncuentra() {
-        var repo = new RepositorioDeAvistadores(jpa, mapper);
-        when(jpa.findByDni("123")).thenReturn(Optional.of(new AvistadorEntity()));
-
-        assertThat(repo.existsByDni("123")).isTrue();
-        verify(jpa).findByDni("123");
-        verifyNoInteractions(mapper);
+    void findByDni_empty() {
+        when(jpa.findByDni("x")).thenReturn(Optional.empty());
+        assertTrue(repo.findByDni("x").isEmpty());
     }
 
     @Test
-    void existsByDni_false_siJPADevuelveEmpty() {
-        var repo = new RepositorioDeAvistadores(jpa, mapper);
-        when(jpa.findByDni("123")).thenReturn(Optional.empty());
+    void existsByDni_true_and_false() {
+        when(jpa.findByDni("1")).thenReturn(Optional.of(new AvistadorEntity()));
+        when(jpa.findByDni("2")).thenReturn(Optional.empty());
 
-        assertThat(repo.existsByDni("123")).isFalse();
-        verify(jpa).findByDni("123");
-        verifyNoInteractions(mapper);
+        assertTrue(repo.existsByDni("1"));
+        assertFalse(repo.existsByDni("2"));
+    }
+
+    @Test
+    void findById_delegates() {
+        var id = UUID.randomUUID();
+        var entity = new AvistadorEntity();
+        when(jpa.findById(id)).thenReturn(Optional.of(entity));
+
+        var res = repo.findById(id);
+        assertTrue(res.isPresent());
+        assertSame(entity, res.get());
     }
 }

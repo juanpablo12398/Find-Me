@@ -4,15 +4,6 @@ import { DesaparecidoService } from '../services/DesaparecidoService.js';
 import { createOption } from '../utils/dom.js';
 import { FILTER_TYPES, MAP_MESSAGES, MAP_COLORS } from '../config/filter/constants.js';
 
-/**
- * Gestor de filtros del mapa - VERSIÓN FINAL CORREGIDA
- *
- * FIXES APLICADOS:
- * 1. ✅ Área: Click izquierdo para dibujar, derecho para terminar
- * 2. ✅ Polígono: Click derecho termina SIN menú contextual
- * 3. ✅ Área: NO arrastra el mapa mientras se dibuja
- * 4. ✅ Funcionan sin login (público)
- */
 export class MapFilters {
 
   constructor(mapManager) {

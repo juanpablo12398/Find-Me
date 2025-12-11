@@ -1,4 +1,5 @@
 package edu.utn.proyecto.applicacion.validation.desaparecido;
+import edu.utn.proyecto.applicacion.validation.desaparecido.DesaparecidoCreatePolicy;
 import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.desaparecido.exception.DesaparecidoError;

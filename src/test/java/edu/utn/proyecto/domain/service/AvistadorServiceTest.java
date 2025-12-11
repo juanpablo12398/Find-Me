@@ -2,99 +2,78 @@ package edu.utn.proyecto.domain.service;
 import edu.utn.proyecto.applicacion.dtos.AvistadorResponseDTO;
 import edu.utn.proyecto.applicacion.mappers.AvistadorMapper;
 import edu.utn.proyecto.applicacion.validation.avistador.AvistadorRegistrationPolicy;
-import edu.utn.proyecto.avistador.exception.AvistadorError;
-import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.domain.model.concreta.Avistador;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InOrder;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import java.time.LocalDateTime;
-import java.util.UUID;
-import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AvistadorServiceTest {
 
-    @Mock IRepoDeAvistadores repo;
-    @Mock AvistadorMapper mapper;
-    @Mock AvistadorRegistrationPolicy policy;
+    @Mock private IRepoDeAvistadores repo;
+    @Mock private AvistadorMapper mapper;
+    @Mock private AvistadorRegistrationPolicy policy;
 
-    @Captor ArgumentCaptor<Avistador> avistadorCaptor;
+    private AvistadorService service;
 
-    @Test
-    void registrar_orquesta_normalize_validate_mapear_save_y_mapearResponse() {
-        var service = new AvistadorService(repo, mapper, policy);
-
-        var req = new AvistadorRequestDTO();
-        req.setDni(" 12.345.678 "); // sucio, para comprobar que se normaliza
-        req.setNombre(" ána ");
-        req.setApellido(" pérez ");
-        req.setEdad(28);
-        req.setDireccion(" Calle 1 ");
-        req.setEmail("  a@a.com  ");
-        req.setTelefono(" 111 ");
-
-        var domain = new Avistador(
-                UUID.randomUUID(), "12345678", "ANA", "PEREZ",
-                28, "Calle 1", "a@a.com", "111", LocalDateTime.now()
-        );
-
-        var saved = new Avistador(
-                domain.getId(), domain.getDni(), domain.getNombre(), domain.getApellido(),
-                domain.getEdad(), domain.getDireccion(), domain.getEmail(), domain.getTelefono(),
-                domain.getCreadoEn()
-        );
-
-        var expected = new AvistadorResponseDTO();
-        expected.setId(saved.getId());
-        expected.setDni(saved.getDni());
-        expected.setNombre(saved.getNombre());
-        expected.setApellido(saved.getApellido());
-
-        when(mapper.fromRequestToDomain(req)).thenReturn(domain);
-        when(repo.save(any(Avistador.class))).thenReturn(saved);
-        when(mapper.fromDomainToResponse(saved)).thenReturn(expected);
-
-        var out = service.registrar(req);
-
-        InOrder io = inOrder(mapper, policy, mapper, repo, mapper);
-        io.verify(mapper).normalizeRequestInPlace(req); // 👈 se usa normalización
-        io.verify(policy).validate(req);
-        io.verify(mapper).fromRequestToDomain(req);
-        io.verify(repo).save(avistadorCaptor.capture());
-        io.verify(mapper).fromDomainToResponse(saved);
-        io.verifyNoMoreInteractions();
-
-        assertThat(avistadorCaptor.getValue().getDni()).isEqualTo("12345678");
-        assertThat(out).isSameAs(expected);
+    @BeforeEach
+    void setUp() {
+        service = new AvistadorService(repo, mapper, policy);
     }
 
     @Test
-    void registrar_siPolicyFalla_noMapeaNiGuarda_yPropagaDomainException() {
-        var service = new AvistadorService(repo, mapper, policy);
-        var req = new AvistadorRequestDTO();
+    @DisplayName("registrar: normaliza, valida, mapea, guarda y devuelve response")
+    void registrar_ok() {
+        AvistadorRequestDTO req = new AvistadorRequestDTO();
+        Avistador domain = new Avistador();
+        Avistador saved = new Avistador();
+        AvistadorResponseDTO resp = new AvistadorResponseDTO();
 
-        doThrow(DomainException.of(AvistadorError.UNDERAGE.key,
-                AvistadorError.UNDERAGE.status, "Debe ser mayor de edad"))
-                .when(policy).validate(req);
+        when(mapper.fromRequestToDomain(req)).thenReturn(domain);
+        when(repo.save(domain)).thenReturn(saved);
+        when(mapper.fromDomainToResponse(saved)).thenReturn(resp);
 
-        assertThatThrownBy(() -> service.registrar(req))
-                .isInstanceOf(DomainException.class)
-                .satisfies(ex -> {
-                    var de = (DomainException) ex;
-                    assertThat(de.getKey()).isEqualTo(AvistadorError.UNDERAGE.key);
-                    assertThat(de.getStatus()).isEqualTo(AvistadorError.UNDERAGE.status);
-                });
+        AvistadorResponseDTO out = service.registrar(req);
 
-        InOrder io = inOrder(mapper, policy);
-        io.verify(mapper).normalizeRequestInPlace(req); // 👈 se invoca igual
+        assertSame(resp, out);
+
+        InOrder io = inOrder(mapper, policy, repo, mapper);
+        io.verify(mapper).normalizeRequestInPlace(req);
         io.verify(policy).validate(req);
-        verifyNoInteractions(repo);
+        io.verify(mapper).fromRequestToDomain(req);
+        io.verify(repo).save(domain);
+        io.verify(mapper).fromDomainToResponse(saved);
+        verifyNoMoreInteractions(mapper, policy, repo);
+    }
+
+    @Test
+    @DisplayName("registrar: si la policy lanza, se propaga")
+    void registrar_policyThrows_propagates() {
+        AvistadorRequestDTO req = new AvistadorRequestDTO();
+        doThrow(new RuntimeException("boom")).when(policy).validate(req);
+
+        assertThrows(RuntimeException.class, () -> service.registrar(req));
+
+        // Se hizo la normalización previa a la policy
+        verify(mapper).normalizeRequestInPlace(req);
+        // La policy se ejecutó y falló
+        verify(policy).validate(req);
+
+        // Nada más debe ocurrir
         verify(mapper, never()).fromRequestToDomain(any());
         verify(mapper, never()).fromDomainToResponse(any());
+        verify(repo, never()).save(any());
+
+        verifyNoMoreInteractions(mapper, policy);
+        verifyNoInteractions(repo);
     }
 }

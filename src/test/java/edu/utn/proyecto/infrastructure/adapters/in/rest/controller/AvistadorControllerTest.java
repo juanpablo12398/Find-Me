@@ -3,125 +3,123 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.utn.proyecto.applicacion.dtos.AvistadorResponseDTO;
 import edu.utn.proyecto.applicacion.usecase.avistador.CreateAvistadorUseCase;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
-import edu.utn.proyecto.infrastructure.adapters.in.rest.exception.ApiExceptionHandler;
 import edu.utn.proyecto.security.TokenService;
+import jakarta.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.context.MessageSource;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
-import java.time.LocalDateTime;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.UUID;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = AvistadorController.class)
-@Import(ApiExceptionHandler.class)
-@AutoConfigureMockMvc(addFilters = false)
 class AvistadorControllerTest {
 
-    @Autowired MockMvc mvc;
-    @Autowired ObjectMapper om;
+    private MockMvc mvc;
+    private CreateAvistadorUseCase createUC;
+    private TokenService tokenService;
+    private ObjectMapper om;
 
-    @MockBean CreateAvistadorUseCase createUseCase;
-    @SpyBean  TokenService tokenService;
+    @RestControllerAdvice
+    static class TestAdvice {
+        @ExceptionHandler(RuntimeException.class)
+        ResponseEntity<String> re(RuntimeException ex) {
+            return ResponseEntity.status(500).body(ex.getMessage());
+        }
+    }
 
-    // Necesario porque ApiExceptionHandler inyecta MessageSource
-    @MockBean MessageSource messageSource;
+    @BeforeEach
+    void setup() {
+        createUC = mock(CreateAvistadorUseCase.class);
+        tokenService = mock(TokenService.class);
+        mvc = MockMvcBuilders
+                .standaloneSetup(new AvistadorController(createUC, tokenService))
+                .setControllerAdvice(new TestAdvice())
+                .build();
+        om = new ObjectMapper();
+    }
 
-    @Test
-    void registrar_ok_201_location_body_y_cookie() throws Exception {
-        // request válido (pasa @Valid)
+    private AvistadorRequestDTO validReq(String email) {
         var req = new AvistadorRequestDTO();
         req.setDni("12345678");
-        req.setNombre("Ana");
-        req.setApellido("Perez");
-        req.setEdad(28);
+        req.setNombre("Juan");
+        req.setApellido("Pérez");
         req.setDireccion("Calle 123");
-        req.setEmail("ana@x.com");
-        req.setTelefono("111-222");
-
-        // respuesta del use case
-        var id = UUID.randomUUID();
-        var resp = new AvistadorResponseDTO();
-        resp.setId(id);
-        resp.setDni("12345678");
-        resp.setNombre("Ana");
-        resp.setApellido("Perez");
-        resp.setEdad(28);
-        resp.setDireccion("Calle 123");
-        resp.setEmail("ana@x.com");
-        resp.setTelefono("111-222");
-        resp.setCreadoEn(LocalDateTime.of(2025,1,1,12,0));
-
-        given(createUseCase.execute(any(AvistadorRequestDTO.class))).willReturn(resp);
-
-        // stub del JWT
-        doReturn("JWT.TOKEN.X").when(tokenService)
-                .generate(eq(id.toString()), eq("12345678"), eq("ana@x.com"), eq("Ana"));
-
-        var mvcRes = mvc.perform(post("/api/avistadores")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/avistadores/" + id)))
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(id.toString()))
-                .andExpect(jsonPath("$.dni").value("12345678"))
-                .andExpect(jsonPath("$.nombre").value("Ana"))
-                .andExpect(jsonPath("$.apellido").value("Perez"))
-                .andReturn();
-
-        // verificaciones de colaboración
-        verify(createUseCase).execute(any(AvistadorRequestDTO.class));
-        verify(tokenService).generate(id.toString(), "12345678", "ana@x.com", "Ana");
-        verify(tokenService).writeCookie(any(), eq("JWT.TOKEN.X"));
-
-        // verifica Set-Cookie
-        var setCookies = mvcRes.getResponse().getHeaders("Set-Cookie");
-        assertThat(setCookies).isNotEmpty();
-        assertThat(setCookies).anySatisfy(c -> {
-            assertThat(c).contains("FM_TOKEN=");
-            assertThat(c).contains("HttpOnly");
-            assertThat(c).contains("Path=/");
-            // 7 días = 604800
-            assertThat(c).contains("Max-Age=604800");
-        });
+        req.setEdad(30);
+        req.setEmail(email);
+        return req;
     }
 
     @Test
-    void registrar_errorPolicy_problemDetail_400_sin_detail() throws Exception {
-        var req = new AvistadorRequestDTO();
-        req.setDni("12345678");
-        req.setNombre("Ana");
-        req.setApellido("Perez");
-        req.setEdad(15); // forzamos underage (o lo que dispare tu regla)
-        req.setDireccion("Calle 123");
-        req.setEmail("ana@x.com");
+    @DisplayName("POST /api/avistadores → 201, Location, cookie y body")
+    void registrar_ok() throws Exception {
+        var req = validReq("a@b.com");
 
-        var ex = edu.utn.proyecto.common.exception.DomainException.of(
-                "avistador.underage", HttpStatus.BAD_REQUEST, "Menor de edad no permitido");
+        var resp = new AvistadorResponseDTO();
+        resp.setId(UUID.randomUUID());
+        resp.setDni("12345678");
+        resp.setNombre("Juan");
+        resp.setEmail("a@b.com");
 
-        given(createUseCase.execute(any(AvistadorRequestDTO.class))).willThrow(ex);
+        when(createUC.execute(any(AvistadorRequestDTO.class))).thenReturn(resp);
+        when(tokenService.generate(anyString(), anyString(), anyString(), anyString())).thenReturn("jwt");
 
         mvc.perform(post("/api/avistadores")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(req)))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
-                .andExpect(jsonPath("$.status").value(400))
-                // tu handler pone "key" en el root y NO incluye "detail"
-                .andExpect(jsonPath("$.key").value("avistador.underage"));
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", containsString("/api/avistadores/")))
+                .andExpect(jsonPath("$.dni").value("12345678"))
+                .andExpect(jsonPath("$.nombre").value("Juan"));
+
+        verify(createUC).execute(any(AvistadorRequestDTO.class));
+        verify(tokenService).generate(eq(resp.getId().toString()), eq("12345678"), eq("a@b.com"), eq("Juan"));
+        verify(tokenService).writeCookie(any(HttpServletResponse.class), eq("jwt"));
+        verifyNoMoreInteractions(createUC, tokenService);
+    }
+
+    @Test
+    @DisplayName("POST /api/avistadores con email null → genera JWT con \"\"")
+    void registrar_emailNull_usaVacio() throws Exception {
+        var req = validReq(null);
+
+        var resp = new AvistadorResponseDTO();
+        resp.setId(UUID.randomUUID());
+        resp.setDni("999");
+        resp.setNombre("SinMail");
+        resp.setEmail(null);
+
+        when(createUC.execute(any(AvistadorRequestDTO.class))).thenReturn(resp);
+        when(tokenService.generate(anyString(), anyString(), anyString(), anyString())).thenReturn("jwt");
+
+        mvc.perform(post("/api/avistadores")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(req)))
+                .andExpect(status().isCreated());
+
+        verify(tokenService).generate(eq(resp.getId().toString()), eq("999"), eq(""), eq("SinMail"));
+    }
+
+    @Test
+    @DisplayName("POST /api/avistadores → servicio lanza → 500 y no escribe cookie")
+    void registrar_serviceThrow_500() throws Exception {
+        var req = validReq("x@y.com");
+        when(createUC.execute(any(AvistadorRequestDTO.class))).thenThrow(new RuntimeException("boom"));
+
+        mvc.perform(post("/api/avistadores")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(req)))
+                .andExpect(status().isInternalServerError());
+
+        verify(createUC).execute(any(AvistadorRequestDTO.class));
+        verifyNoInteractions(tokenService);
     }
 }

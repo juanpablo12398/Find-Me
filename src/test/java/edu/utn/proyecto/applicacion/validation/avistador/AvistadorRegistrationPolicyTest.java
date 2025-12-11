@@ -1,97 +1,63 @@
 package edu.utn.proyecto.applicacion.validation.avistador;
-import edu.utn.proyecto.avistador.exception.AvistadorError;
-import edu.utn.proyecto.common.exception.DomainException;
 import edu.utn.proyecto.common.validation.abstraccion.Rule;
 import edu.utn.proyecto.infrastructure.adapters.in.rest.dtos.AvistadorRequestDTO;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeAvistadores;
 import edu.utn.proyecto.infrastructure.ports.out.IRepoDeRenaper;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AvistadorRegistrationPolicyTest {
 
-    @Mock IRepoDeRenaper renaper;
-    @Mock IRepoDeAvistadores repo;
-    @Mock Rule<AvistadorRequestDTO> rule1;
-    @Mock Rule<AvistadorRequestDTO> rule2;
-
-    AvistadorRegistrationPolicy policy;
-
-    @BeforeEach
-    void setUp() {
-        policy = new AvistadorRegistrationPolicy(renaper, repo, List.of(rule1, rule2));
-    }
+    @Mock private IRepoDeRenaper renaper;
+    @Mock private IRepoDeAvistadores repo;
+    @Mock private Rule<AvistadorRequestDTO> r1;
+    @Mock private Rule<AvistadorRequestDTO> r2;
 
     @Test
-    void happyPath_ejecuta_reglas() {
-        var dto = buildDto();
+    @DisplayName("validate: ejecuta reglas en orden y no usa repos")
+    void validate_callsRules() {
+        AvistadorRequestDTO dto = new AvistadorRequestDTO();
+        AvistadorRegistrationPolicy policy =
+                new AvistadorRegistrationPolicy(renaper, repo, List.of(r1, r2));
 
         policy.validate(dto);
 
-        verify(rule1).check(dto);
-        verify(rule2).check(dto);
+        InOrder order = inOrder(r1, r2);
+        order.verify(r1).check(dto);
+        order.verify(r2).check(dto);
+        verifyNoMoreInteractions(r1, r2);
         verifyNoInteractions(renaper, repo);
     }
 
     @Test
-    void propaga_PADRON_NOT_FOUND() {
-        var dto = buildDto();
-        doThrow(DomainException.of(AvistadorError.PADRON_NOT_FOUND.key, AvistadorError.PADRON_NOT_FOUND.status, ""))
-                .when(rule1).check(dto);
+    @DisplayName("validate: propaga excepción y detiene cadena")
+    void validate_propagatesAndStops() {
+        AvistadorRequestDTO dto = new AvistadorRequestDTO();
+        doThrow(new RuntimeException("boom")).when(r1).check(dto);
 
-        assertThatThrownBy(() -> policy.validate(dto))
-                .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException) e).getKey())
-                .isEqualTo(AvistadorError.PADRON_NOT_FOUND.key);
+        AvistadorRegistrationPolicy policy =
+                new AvistadorRegistrationPolicy(renaper, repo, List.of(r1, r2));
 
-        verify(rule1).check(dto);
-        verify(rule2, never()).check(dto);
+        assertThrows(RuntimeException.class, () -> policy.validate(dto));
+        verify(r1).check(dto);
+        verify(r2, never()).check(any());
         verifyNoInteractions(renaper, repo);
     }
 
     @Test
-    void propaga_PADRON_NO_MATCH() {
-        var dto = buildDto();
-        doThrow(DomainException.of(AvistadorError.PADRON_NO_MATCH.key, AvistadorError.PADRON_NO_MATCH.status, ""))
-                .when(rule1).check(dto);
-
-        assertThatThrownBy(() -> policy.validate(dto))
-                .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException) e).getKey())
-                .isEqualTo(AvistadorError.PADRON_NO_MATCH.key);
-    }
-
-    @Test
-    void propaga_DNI_DUP() {
-        var dto = buildDto();
-        doThrow(DomainException.of(AvistadorError.DNI_DUP.key, AvistadorError.DNI_DUP.status, ""))
-                .when(rule2).check(dto);
-
-        assertThatThrownBy(() -> policy.validate(dto))
-                .isInstanceOf(DomainException.class)
-                .extracting(e -> ((DomainException) e).getKey())
-                .isEqualTo(AvistadorError.DNI_DUP.key);
-
-        verify(rule1).check(dto); // pasó la primera
-        verify(rule2).check(dto);
-    }
-
-    private AvistadorRequestDTO buildDto() {
-        var dto = new AvistadorRequestDTO();
-        dto.setDni("12345678");
-        dto.setNombre("ANA");
-        dto.setApellido("PEREZ");
-        dto.setEdad(25);
-        dto.setDireccion("Calle 123");
-        dto.setEmail("a@a.com");
-        dto.setTelefono("111");
-        return dto;
+    @DisplayName("validate: lista vacía")
+    void validate_emptyRules() {
+        AvistadorRegistrationPolicy policy =
+                new AvistadorRegistrationPolicy(renaper, repo, List.of());
+        policy.validate(new AvistadorRequestDTO());
+        verifyNoInteractions(r1, r2, renaper, repo);
     }
 }

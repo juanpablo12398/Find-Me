@@ -1,49 +1,52 @@
 package edu.utn.proyecto.common.normalize;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 class TextNormalizerTest {
 
-    private final TextNormalizer normalizer = new TextNormalizer();
+    private final TextNormalizer norm = new TextNormalizer();
 
     @Test
-    void devuelveNull_siEntradaNull() {
-        assertThat(normalizer.upperNoAccents(null)).isNull();
+    @DisplayName("upperNoAccents: quita acentos y deja SoloPrimeraMayúscula resto minúsculas")
+    void upperNoAccents_basic() {
+        assertEquals("Jose", norm.upperNoAccents("jóse"));
+        assertEquals("Perez", norm.upperNoAccents("péRez"));
+        assertEquals("Nandu", norm.upperNoAccents("ñandÚ"));
+        assertEquals("Creme brulee", norm.upperNoAccents("  crème BRÛLÉE  "));
     }
 
     @Test
-    void devuelveNull_siEntradaBlank() {
-        assertThat(normalizer.upperNoAccents("   ")).isNull();
+    @DisplayName("upperNoAccents: null o blank → null")
+    void upperNoAccents_nullOrBlank() {
+        assertNull(norm.upperNoAccents(null));
+        assertNull(norm.upperNoAccents("   "));
     }
 
     @Test
-    void trimea_y_titleCaseGlobal() {
-        assertThat(normalizer.upperNoAccents("  ana  ")).isEqualTo("Ana");
-    }
-
-    @ParameterizedTest
-    @CsvSource({
-            "áéíóú, Aeiou",
-            "ÁÉÍÓÚ, Aeiou",
-            "'ñ Ñ', 'N n'",
-            "María-José, Maria-jose",
-            "'  pérez gómez ', 'Perez gomez'",
-            "lücía, Lucia"
-    })
-    void eliminaTildesYDiacriticos_yAplicaTitleCaseGlobal(String in, String expected) {
-        assertThat(normalizer.upperNoAccents(in)).isEqualTo(expected);
+    @DisplayName("sentenceCase: Primera en mayúscula, resto minúsculas")
+    void sentenceCase_basic() {
+        assertEquals("Hola", norm.sentenceCase("hOLA"));
+        assertEquals("Hola mundo", norm.sentenceCase("  HOLA MUNDO "));
     }
 
     @Test
-    void sentenceCase_respetaTituloSimpleSinQuitarAcentos() {
-        assertThat(normalizer.sentenceCase("  hOlA MUnDo  ")).isEqualTo("Hola mundo");
+    @DisplayName("sentenceCase: null o blank → null")
+    void sentenceCase_nullOrBlank() {
+        assertNull(norm.sentenceCase(null));
+        assertNull(norm.sentenceCase("  "));
     }
 
     @Test
-    void normalize_trim_simple() {
-        assertThat(normalizer.normalize("  abc  ")).isEqualTo("abc");
-        assertThat(normalizer.normalize(null)).isNull();
+    @DisplayName("normalize: trim simple, preserva case")
+    void normalize_trim() {
+        assertEquals("a@MAIL.com", norm.normalize("  a@MAIL.com  "));
+        assertEquals("", norm.normalize(""));
+    }
+
+    @Test
+    @DisplayName("normalize: null → null")
+    void normalize_null() {
+        assertNull(norm.normalize(null));
     }
 }

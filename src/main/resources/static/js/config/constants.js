@@ -34,13 +34,13 @@ export const ERROR_MAPS = {
 
   AUTH: {
     404: {
-      "auth.renaper.notfound": "No existe en padrón (RENAPER).",
-      "auth.user.notfound": "Usuario no registrado. Primero debés registrarte.",
-      default: "Usuario no encontrado."
+      "auth.login.renaper.notfound": "No existe en padrón (RENAPER).",
+      "auth.login.user.notfound": "Usuario no registrado. Primero debés registrarte.",
+      default: "Usuario no encontrado.",
     },
     422: {
-      "auth.email.mismatch": "El email no coincide con el registrado.",
-      default: "Datos inválidos."
+      "auth.login.email.mismatch": "El email no coincide con el registrado.",
+      default: "Datos inválidos.",
     },
     401: {
       "auth.token.notfound": "No encontramos tu sesión. Iniciá sesión de nuevo.",
@@ -48,9 +48,9 @@ export const ERROR_MAPS = {
       "auth.token.invalid": "Token inválido. Probá iniciar sesión otra vez.",
       "auth.token.malformed": "Token mal formado.",
       "auth.token.data.missing": "Faltan datos en el token.",
-      default: "Credenciales inválidas."
-    }
-  }
+      default: "Credenciales inválidas.",
+    },
+  },
 
   AVISTAMIENTO: {
     404: {
