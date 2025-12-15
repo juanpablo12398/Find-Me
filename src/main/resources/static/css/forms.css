@@ -1,0 +1,446 @@
+/* ============================================
+   ESTILOS UNIFICADOS - FORMULARIOS Y BOTONES
+
+   Agregar al final de modular.css o crear como
+   forms-buttons.css separado
+   ============================================ */
+
+/* ============================================
+   FORMULARIOS - ESTILO PROFESIONAL
+   ============================================ */
+
+/* Inputs y Textareas */
+.form__input,
+.form__textarea {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+
+  /* Bordes y colores */
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+
+  /* Typography */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  color: #333;
+
+  /* Transiciones */
+  transition: all 0.3s ease;
+
+  /* Shadow sutil */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Focus State - Mismo color que filtros */
+.form__input:focus,
+.form__textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  background: #fafbff;
+}
+
+/* Hover State */
+.form__input:hover,
+.form__textarea:hover {
+  border-color: #667eea;
+}
+
+/* Placeholder */
+.form__input::placeholder,
+.form__textarea::placeholder {
+  color: #999;
+  font-weight: 400;
+}
+
+/* Invalid State - Sutil */
+.form__input--invalid {
+  border-color: #f093fb;
+  background: #fff5fd;
+}
+
+.form__input--invalid:focus {
+  box-shadow: 0 0 0 3px rgba(240, 147, 251, 0.15);
+}
+
+/* Textarea específico */
+.form__textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* Select - mismo estilo */
+select.form__input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* ============================================
+   BOTONES - ESTILO PROFESIONAL
+   Mismo estilo que filtros del mapa
+   ============================================ */
+
+/* Reset de botones */
+.button {
+  /* Reset */
+  border: none;
+  outline: none;
+  margin: 0;
+
+  /* Base */
+  width: 100%;
+  padding: 12px 24px;
+
+  /* Typography */
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+
+  /* Shape */
+  border-radius: 8px;
+
+  /* Cursor */
+  cursor: pointer;
+  user-select: none;
+
+  /* Transitions */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shadow */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+
+  /* Margen */
+  margin-bottom: 12px;
+}
+
+/* ============================================
+   BUTTON PRIMARY - Gradiente violeta
+   ============================================ */
+.button--primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+.button--primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5568d3 0%, #63408b 100%);
+}
+
+.button--primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.button--primary:disabled {
+  background: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ============================================
+   BUTTON SECONDARY - Blanco con borde
+   Mismo estilo que botones de navegación
+   ============================================ */
+.button--secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #e0e0e0;
+}
+
+.button--secondary:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.button--secondary:active {
+  transform: translateY(0);
+}
+
+/* ============================================
+   BUTTON DANGER - Rojo/Rosa gradiente
+   ============================================ */
+.button--danger {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+}
+
+.button--danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+  background: linear-gradient(135deg, #e072e6 0%, #e23d52 100%);
+}
+
+.button--danger:active {
+  transform: translateY(0);
+}
+
+/* ============================================
+   BOTONES DEL MAPA - Especiales
+   ============================================ */
+
+/* Contenedor de controles del mapa */
+.map__controls {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.map__controls .button {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Botón Actualizar Mapa - estilo secundario */
+.map__controls .button--secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+/* Botón Modo Reportar - estilo primario con emoji */
+.map__controls .button--primary {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.map__controls .button--primary:hover {
+  background: linear-gradient(135deg, #0e8072 0%, #2dd868 100%);
+  box-shadow: 0 4px 12px rgba(17, 153, 142, 0.4);
+}
+
+/* Cuando está en modo reportar - cambiar a cancelar */
+.map__controls .button--danger {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+/* ============================================
+   LABELS Y HINTS
+   ============================================ */
+.form__label-text {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form__hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+/* ============================================
+   MENSAJES DE VALIDACIÓN
+   ============================================ */
+.form__message {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  min-height: auto;
+}
+
+.form__message--success {
+  background: linear-gradient(135deg, #11998e15 0%, #38ef7d15 100%);
+  color: #11998e;
+  border-left: 4px solid #11998e;
+}
+
+.form__message--error {
+  background: linear-gradient(135deg, #f093fb15 0%, #f5576c15 100%);
+  color: #d63447;
+  border-left: 4px solid #f5576c;
+}
+
+.form__message--loading {
+  background: #f5f7fa;
+  color: #667eea;
+  border-left: 4px solid #667eea;
+}
+
+/* ============================================
+   CHECKBOXES Y RADIOS - Modernos
+   ============================================ */
+.form__label--checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.form__label--checkbox:hover {
+  background: #f5f7fa;
+}
+
+.form__label--checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+/* ============================================
+   DIVIDER - Mejorado
+   ============================================ */
+.divider {
+  text-align: center;
+  color: #999;
+  margin: 20px 0;
+  font-size: 14px;
+  position: relative;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #e0e0e0, transparent);
+}
+
+.divider::before {
+  left: 0;
+}
+
+.divider::after {
+  right: 0;
+}
+
+/* ============================================
+   FORM ROWS - Grid mejorado
+   ============================================ */
+.form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .form__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   SECCIONES - Cards profesionales
+   ============================================ */
+.section {
+  display: none;
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.3s ease-in;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.section--active {
+  display: block;
+}
+
+.section h2 {
+  color: #333;
+  margin-bottom: 24px;
+  font-size: 1.75rem;
+  font-weight: 600;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* ============================================
+   RESPONSIVE - Botones
+   ============================================ */
+@media (max-width: 768px) {
+  .button {
+    padding: 14px 20px;
+    font-size: 14px;
+  }
+
+  .map__controls {
+    flex-direction: column;
+  }
+
+  .map__controls .button {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animación para botones */
+.button {
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.button:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* ============================================
+   FOCUS VISIBLE - Accesibilidad
+   ============================================ */
+.button:focus-visible {
+  outline: 3px solid rgba(102, 126, 234, 0.4);
+  outline-offset: 2px;
+}
+
+.form__input:focus-visible,
+.form__textarea:focus-visible {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}

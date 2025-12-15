@@ -1,9 +1,12 @@
 package edu.utn.proyecto.infrastructure.ports.out;
-import edu.utn.proyecto.domain.model.Avistador;
+import edu.utn.proyecto.domain.model.concreta.Avistador;
+import edu.utn.proyecto.infrastructure.adapters.out.rest.persistence.entities.AvistadorEntity;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface IRepoDeAvistadores {
-        public Avistador getAvistador(Avistador avistador);
-        public void addAvistador(Avistador avistador);
-        public void updateAvistador(Avistador avistador);
-        public void deleteAvistador(Avistador avistador);
+        Avistador save(Avistador avistador);
+        Optional<Avistador> findByDni(String dni);   // <--- Optional para poder leer datos
+        boolean existsByDni(String dni);
+        Optional<AvistadorEntity> findById(UUID uuid);
 }

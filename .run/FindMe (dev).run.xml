@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="FindMe (dev)" type="Application" factoryName="Application">
+    <envs>
+      <env name="CORS_ORIGINS" value="http://localhost:8080,http://localhost:63342" />
+      <env name="DB_PASS" value="npg_YNc3gGiKwH0y" />
+      <env name="DB_URL" value="jdbc:postgresql://ep-shiny-sun-a869u1v0-pooler.eastus2.azure.neon.tech/neondb?sslmode=require" />
+      <env name="DB_USER" value="neondb_owner" />
+      <env name="JWT_COOKIE_SECURE" value="false" />
+      <env name="JWT_EXPIRATION_DAYS" value="7" />
+      <env name="JWT_SECRET" value="i5z3n9dHf+y4fd9MEgaqEBL+65i3rwXuTvpUrNbh8H0JHIBx6Ac75pLEMV9o9Oe9SkQ6ZVlUrvAK7FJeBtLWiQ== " />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="edu.utn.proyecto.Application" />
+    <module name="Proyeccto.PPS" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

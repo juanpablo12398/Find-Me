@@ -1,0 +1,76 @@
+---
+config:
+  theme: neo
+---
+gantt
+    title Proyecto Find Me - Cronograma 2025-2026
+    dateFormat YYYY-MM-DD
+    section Fase 0 - Planificación y Diseño
+        Acta de Constitución              :done, p1, 2025-02-01, 5d
+        Documento de Arquitectura         :done, p2, 2025-02-06, 22d
+        Mockups UI/UX                     :done, p3, 2025-02-20, 23d
+        Hito Arquitectura Definida        :milestone, h1, 2025-02-28, 0d
+        Hito UI/UX Diseñada               :milestone, h2, 2025-03-15, 0d
+    section Fase 1 - Backend E1
+        Setup Proyecto Backend            :e1b1, 2025-03-16, 15d
+        Modelo de Datos + PostGIS         :e1b2, 2025-03-31, 20d
+        CRUD Avistadores                  :e1b3, 2025-04-20, 15d
+        CRUD Personas Desaparecidas       :e1b4, 2025-05-05, 15d
+        CRUD Avistamientos                :e1b5, 2025-05-20, 20d
+        Autenticación JWT                 :e1b6, 2025-06-09, 12d
+        Documentación Swagger             :e1b7, 2025-06-21, 9d
+        Hito Backend MVP Operativo        :milestone, crit, h3, 2025-06-30, 0d
+    section Fase 2 - Frontend E1
+        Setup Proyecto Frontend           :e1f1, 2025-07-01, 10d
+        Integración Leaflet.js            :e1f2, 2025-07-11, 15d
+        Mapa con Marcadores               :e1f3, 2025-07-26, 15d
+        Formularios de Carga              :e1f4, 2025-08-10, 20d
+        Integración Cloudinary            :e1f5, 2025-08-30, 10d
+        Responsive Design                 :e1f6, 2025-09-09, 21d
+        Hito Frontend MVP Integrado       :milestone, crit, h4, 2025-09-30, 0d
+    section Fase 3 - Integración y Pruebas E1
+        Integración Backend-Frontend      :e1i1, 2025-10-01, 15d
+        Flujo CRUD End-to-End             :e1i2, 2025-10-16, 15d
+        Corrección de Bugs                :e1i3, 2025-10-31, 15d
+        Testing Automatizado E1 (≈70% cov):e1i4, 2025-11-15, 15d
+        Hito Sistema E1 Completo          :milestone, crit, h5, 2025-11-30, 0d
+    section Fase 4 - Deploy y Presentación E1
+        Configuración Railway/Render      :e1d1, 2025-12-01, 5d
+        Configuración Vercel/Netlify      :e1d2, 2025-12-06, 3d
+        Deploy Backend                    :e1d3, 2025-12-09, 3d
+        Deploy Frontend                   :e1d4, 2025-12-12, 3d
+        Testing en Producción             :e1d5, 2025-12-15, 3d
+        Documentación README              :e1d6, 2025-12-15, 3d
+        Preparación Demo E1               :e1d7, 2025-12-18, 2d
+        Hito Deploy Producción E1         :milestone, crit, h6, 2025-12-20, 0d
+        Hito Presentación E1              :milestone, crit, h7, 2025-12-20, 0d
+    section Fase 5 - Desarrollo Funcional E2
+        Módulo Búsqueda DNI (exacta)      :e2d1, 2025-12-21, 10d
+        Módulo Búsqueda Fuzzy             :e2d2, 2025-12-31, 10d
+        Hito Búsqueda Implementada        :milestone, h8, 2026-01-10, 0d
+        Perfiles Individuales             :e2d3, 2026-01-11, 10d
+        Timeline de Avistamientos         :e2d4, 2026-01-21, 4d
+        Hito Perfiles con Timeline        :milestone, h9, 2026-01-25, 0d
+        Diferenciación Visual             :e2d5, 2026-01-21, 4d
+        Filtros por Fecha                 :e2d6, 2026-01-25, 2d
+    section Fase 6 - Optimización y Performance E2
+        Clustering de Marcadores          :e2o1, 2026-01-27, 3d
+        Optimización Queries PostGIS      :e2o2, 2026-01-30, 2d
+        Hito Performance Optimizada       :milestone, h10, 2026-02-01, 0d
+    section Fase 7 - Cierre Técnico E2
+        Términos y Condiciones            :e2f1, 2026-02-02, 2d
+        Política de Privacidad            :e2f2, 2026-02-04, 1d
+        Sistema de Moderación             :e2f3, 2026-02-05, 2d
+        Testing Automatizado E2 (≈80% cov):e2f4, 2026-02-05, 3d
+        Corrección Bugs E2                :e2f5, 2026-02-08, 3d
+    section Fase 8 - UAT y Entrega Final
+        Planificación UAT                 :e2u1, 2026-02-11, 1d
+        Ejecución UAT (3 usuarios)        :e2u2, 2026-02-12, 3d
+        Hito UAT Completada               :milestone, h11, 2026-02-15, 0d
+        Ajustes post-UAT                  :e2u3, 2026-02-15, 2d
+        Manual de Usuario                 :e2u4, 2026-02-15, 2d
+        Guía de Deployment                :e2u5, 2026-02-17, 1d
+        Deploy Final E2                   :e2u6, 2026-02-18, 2d
+        Hito Deploy Producción E2         :milestone, crit, h12, 2026-02-20, 0d
+        Preparación Demo Final            :e2u7, 2026-02-18, 2d
+        Hito Presentación Final           :milestone, crit, h13, 2026-02-20, 0d
