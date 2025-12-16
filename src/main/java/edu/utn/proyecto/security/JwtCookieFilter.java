@@ -22,6 +22,12 @@ public class JwtCookieFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
+        String path = req.getRequestURI();
+        if (path.endsWith(".js") || path.endsWith(".css") || path.endsWith(".html") ||
+                path.endsWith(".png") || path.endsWith(".jpg") || path.endsWith(".ico")) {
+            chain.doFilter(req, res);
+            return;
+        }
 
         Cookie[] cookies = req.getCookies();
         if (cookies != null) {
