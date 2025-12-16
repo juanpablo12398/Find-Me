@@ -38,18 +38,29 @@ public class SecurityConfig {
                 // Registramos el filtro de la cookie JWT antes del AnonymousAuthenticationFilter
                 .addFilterBefore(new JwtCookieFilter(jwtVerifier), AnonymousAuthenticationFilter.class)
                 .authorizeHttpRequests(reg -> reg
+                        // Archivos HTML y raíz
                         .requestMatchers("/", "/index.html").permitAll()
+
+                        // CSS y JS - TODAS las rutas y subdirectorios
                         .requestMatchers("/css/**", "/*.css").permitAll()
                         .requestMatchers("/js/**", "/*.js").permitAll()
+                        .requestMatchers("/js/config/**", "/js/services/**", "/js/ui/**", "/js/utils/**", "/js/features/**").permitAll()
+
+                        // Assets e imágenes
                         .requestMatchers(HttpMethod.GET, "/images/**", "/assets/**", "/static/**", "/favicon.ico").permitAll()
+
+                        // APIs públicas
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/avistadores").permitAll()
                         .requestMatchers(HttpMethod.GET,  "/api/desaparecidos").permitAll()
                         .requestMatchers(HttpMethod.GET,  "/api/avistamientos/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/avistamientos/poligono").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/avistamientos/buscar/**").permitAll()
+
+                        // APIs autenticadas
                         .requestMatchers(HttpMethod.POST, "/api/desaparecidos").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/avistamientos/**").authenticated()
+
                         .anyRequest().authenticated()
                 );
         return http.build();
