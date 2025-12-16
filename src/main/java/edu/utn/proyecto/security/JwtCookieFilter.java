@@ -22,7 +22,7 @@ public class JwtCookieFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws ServletException, IOException {
-        String path = req.getRequestURI();
+        String path = req.getRequestURI().toLowerCase();
         if (path.startsWith("/js/") || path.startsWith("/css/") ||
                 path.startsWith("/images/") || path.startsWith("/assets/") ||
                 path.equals("/") || path.equals("/index.html") ||
