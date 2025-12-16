@@ -1,13 +1,12 @@
 FROM nginx:alpine
 
-# Copiar todos los archivos estáticos
+# Copiar archivos estáticos
 COPY src/main/resources/static/ /usr/share/nginx/html/
 
-# Copiar configuración de nginx
+# Copiar configuración
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Exponer puerto dinámico de Railway
 EXPOSE $PORT
 
-# Iniciar nginx con sustitución de variable PORT
-CMD sh -c "envsubst '\$PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+# Script para reemplazar variables de entorno
+CMD sh -c "envsubst '\$PORT \$BACKEND_URL' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
