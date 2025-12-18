@@ -40,6 +40,13 @@ export class Navigation {
       this._updateAuthUI();
     });
 
+    // Escuchar pedidos de login desde otros módulos
+    window.addEventListener('requireLogin', (e) => {
+      this.navigateTo('login');
+      const lm = document.getElementById('loginMessage');
+      if (lm) lm.textContent = e.detail?.message || 'Debés iniciar sesión para continuar.';
+    });
+
     // Actualizar UI inicial según estado de autenticación
     this._updateAuthUI();
 

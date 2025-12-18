@@ -100,8 +100,10 @@ export class MapManager {
 
     btnToggle.onclick = () => {
       if (!AuthService.getCurrentUser()) {
-        alert("Debés iniciar sesión para reportar un avistamiento.");
-        return;
+          window.dispatchEvent(new CustomEvent('requireLogin', {
+            detail: { message: 'Iniciá sesión para reportar un avistamiento.' }
+          }));
+          return;
       }
 
       this.isReportMode = !this.isReportMode;
