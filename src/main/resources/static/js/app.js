@@ -323,8 +323,3 @@ function renderTable(data) {
     tbody.appendChild(tr);
   });
 }
-
-// ============================================
-// === BOOTSTRAP ===
-// ============================================
-document.addEventListener('DOMContentLoaded', initApp);

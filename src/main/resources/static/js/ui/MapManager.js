@@ -275,65 +275,70 @@ export class MapManager {
   /**
    * Envía el formulario de avistamiento
    */
-  async submitAvistamiento(formData) {
-    const result = document.getElementById("avistamientoResult");
+      async submitAvistamiento(formData) {
+        const result = document.getElementById("avistamientoResult");
 
-    if (!this.selectedLatLng) {
-      showError(result, "No hay coordenadas seleccionadas");
-      return;
-    }
+        if (!this.selectedLatLng) {
+          showError(result, "No hay coordenadas seleccionadas");
+          return;
+        }
 
-    const user = AuthService.getCurrentUser();
-    if (!user) {
-      showError(result, "Debes iniciar sesión");
-      return;
-    }
+        const user = AuthService.getCurrentUser();
+        if (!user) {
+          showError(result, "Debes iniciar sesión");
+          return;
+        }
 
-    showLoading(result, "Enviando...");
-    setButtonState("btnSubmitAvistamiento", true);
+        showLoading(result, "Enviando...");
+        setButtonState("btnSubmitAvistamiento", true);
 
-    try {
-      const body = {
-        avistadorId: String(user.id),
-        desaparecidoId: String(formData.desaparecidoId),
-        latitud: this.selectedLatLng.lat,
-        longitud: this.selectedLatLng.lng,
-        descripcion: formData.descripcion,
-        fotoUrl: formData.fotoUrl || null,
-        publico: formData.publico
-      };
+        try {
+          const body = {
+            avistadorId: String(user.id),
+            desaparecidoId: String(formData.desaparecidoId),
+            latitud: this.selectedLatLng.lat,
+            longitud: this.selectedLatLng.lng,
+            descripcion: formData.descripcion,
+            fotoUrl: formData.fotoUrl || null,
+            publico: formData.publico
+          };
 
-      const created = await AvistamientoService.crear(body);
+          const created = await AvistamientoService.crear(body);
 
-      showSuccess(result, "Avistamiento reportado exitosamente");
+          showSuccess(result, "Avistamiento reportado exitosamente");
 
-      // Agregar marker al mapa
-      this._addMarker({
-        id: created.id,
-        desaparecidoId: formData.desaparecidoId,
-        latitud: created.latitud,
-        longitud: created.longitud,
-        fechaFormateada: "Recién reportado",
-        descripcion: created.descripcion,
-        fotoUrl: created.fotoUrl,
-        verificado: false,
-        desaparecidoNombre: formData.desaparecidoNombre || "",
-        desaparecidoApellido: "",
-        avistadorNombre: user.nombre || user.dni
-      });
+          // Agregar marker al mapa
+          this._addMarker({
+            id: created.id,
+            desaparecidoId: formData.desaparecidoId,
+            latitud: created.latitud,
+            longitud: created.longitud,
+            fechaFormateada: "Recién reportado",
+            descripcion: created.descripcion,
+            fotoUrl: created.fotoUrl,
+            verificado: false,
+            desaparecidoNombre: formData.desaparecidoNombre || "",
+            desaparecidoApellido: "",
+            avistadorNombre: user.nombre || user.dni
+          });
 
-      setTimeout(() => {
-        this.closeModal();
-        this._deactivateReportMode();
-        this._updateEstado("✅ Avistamiento agregado al mapa", "green");
-      }, 1000);
+          setTimeout(() => {
+            this.closeModal();
+            this._deactivateReportMode();
+            this._updateEstado("✅ Avistamiento agregado al mapa", "green");
 
-    } catch (err) {
-      showError(result, err.message);
-    } finally {
-      setButtonState("btnSubmitAvistamiento", false);
-    }
-  }
+            // Actualizar contador
+            if (this.filters) {
+              this.filters.applyCurrentFilter();
+            }
+          }, 1000);
+
+        } catch (err) {
+          showError(result, err.message);
+        } finally {
+          setButtonState("btnSubmitAvistamiento", false);
+        }
+      }
 
   /**
    * Desactiva el modo reportar
